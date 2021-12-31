@@ -1,0 +1,49 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-title>Header - No Border</ion-title>
+  </ion-toolbar>
+</ion-header>
+<ion-content>
+  <ion-grid>
+    <ion-item style="--border-style: none">
+      <ion-label color="primary" style="font-weight: bold; text-align: center">
+        Chia Sẻ
+      </ion-label>
+    </ion-item>
+    <ion-list>
+      <ion-button
+        color="primary"
+        fill="clear"
+        size="large"
+        target="_blank"
+        [href]="facebookLink"
+        (click)="dismiss()"
+      >
+        <ion-icon name="logo-facebook"></ion-icon>
+      </ion-button>
+      <ion-button
+        color="success"
+        fill="clear"
+        size="large"
+        target="_blank"
+        [href]="whatsappLink"
+        (click)="dismiss()"
+      >
+        <ion-icon name="logo-whatsapp"></ion-icon>
+      </ion-button>
+      <ion-button
+        style="color: #3880ff"
+        fill="clear"
+        size="large"
+        target="_blank"
+        [href]="emailLink"
+        (click)="dismiss()"
+      >
+        <ion-icon name="vgm-gmail"></ion-icon>
+      </ion-button>
+      <ion-button color="dark" fill="clear" size="large" (click)="onLink()">
+        <ion-icon name="link-outline"></ion-icon>
+      </ion-button>
+    </ion-list>
+  </ion-grid>
+</ion-content>

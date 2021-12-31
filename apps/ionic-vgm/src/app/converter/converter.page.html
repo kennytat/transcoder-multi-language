@@ -1,0 +1,227 @@
+<ion-content [fullscreen]="true" class="tab-content">
+  <ion-grid>
+    <ion-row class="row">
+      <ion-col class="col">
+        <ion-card class="card">
+          <ion-item>
+            <ion-icon name="folder-open-outline" slot="start"></ion-icon>
+            <ion-label>M3U8 Streaming Transcoder</ion-label>
+            <ion-button
+              fill="outline"
+              slot="end"
+              style="font-size: 17px"
+              (click)="updateLeaf()"
+            >
+              updateLeaf
+            </ion-button>
+            <ion-button fill="outline" slot="end" (click)="test()"
+              >Test</ion-button
+            >
+          </ion-item>
+
+          <ion-card-content>
+            <ion-label position="stacked">Browse Input Source</ion-label>
+            <ion-grid>
+              <ion-row>
+                <ion-col size="8"
+                  ><ion-input
+                    value="{{inputPath | shortenList }}"
+                    placeholder="Select input source..."
+                    readonly
+                    class="path"
+                  ></ion-input
+                ></ion-col>
+                <ion-col size="4" class="no-vertical-padding"
+                  ><ion-button
+                    disabled="{{isConverting}}"
+                    expand="block"
+                    size="small"
+                    (click)="OpenDialog()"
+                    >Browse</ion-button
+                  >
+
+                  <div>
+                    <ion-checkbox
+                      slot="end"
+                      class="check-box"
+                      disabled="{{isConverting}}"
+                      [(ngModel)]="fileCheckbox"
+                      (ionChange)="inputPath = ''"
+                    ></ion-checkbox
+                    ><ion-label>Files only</ion-label>
+                  </div>
+                </ion-col>
+              </ion-row>
+            </ion-grid>
+          </ion-card-content>
+
+          <hr class="new" />
+
+          <ion-card-content>
+            <div>
+              <ion-label position="stacked"
+                >Browse Output Destination</ion-label
+              >
+            </div>
+            <ion-grid>
+              <ion-row>
+                <ion-col size="8">
+                  <ion-input
+                    value="{{outputPath}}"
+                    placeholder="Select output destination"
+                    readonly
+                    class="path"
+                  ></ion-input>
+                </ion-col>
+                <ion-col size="4"
+                  ><ion-button
+                    disabled="{{isConverting}}"
+                    expand="block"
+                    size="small"
+                    (click)="SaveDialog()"
+                    >Browse</ion-button
+                  >
+                </ion-col>
+              </ion-row>
+            </ion-grid>
+          </ion-card-content>
+          <hr class="new" />
+          <ion-card-content>
+            <div>
+              <ion-label position="stacked"
+                >Database Location:
+                <span style="color: var(--ion-color-success)">
+                  {{selectedItem ? selectedItem.isVideo ? 'VGMV/' : 'VGMA/' : ''
+                  }}{{(selectedItem ? selectedItem.url : '' ) | replaceDotSlash
+                  }}
+                </span>
+              </ion-label>
+            </div>
+            <ion-grid *ngIf="selectedTopics">
+              <ion-row *ngFor="let level of selectedTopics; index as i">
+                <ion-col
+                  size="6"
+                  class="no-vertical-padding"
+                  *ngIf="level.level === 1 || i >= 1 && selectedTopics[i-1].id !== '0' && selectedTopics[i-1].id !== '1' && selectedLevel >= i"
+                >
+                  <select
+                    [(ngModel)]="level.id"
+                    (ngModelChange)="selectOptionChange(level.level, level.id)"
+                    [ngStyle]="{ 'padding-left.px': i * 20, 'color': level.id === '0' ? 'var(--ion-color-success)' : '' }"
+                  >
+                    <option [ngValue]="'0'" selected>
+                      {{ i === 0 ? 'Select Database' :'Use current categories'}}
+                    </option>
+                    <option
+                      [ngValue]="'1'"
+                      *ngIf="i !== 0"
+                      style="color: var(--ion-color-warning)"
+                    >
+                      Create new topic
+                    </option>
+                    <option
+                      *ngFor="let item of level.options, index as i"
+                      [ngValue]="item.id"
+                      style="color: var(--ion-color-dark)"
+                    >
+                      {{item.name}}
+                    </option>
+                  </select>
+                </ion-col>
+                <ion-col
+                  style="width: 100%"
+                  class="no-vertical-padding"
+                  *ngIf="level.id === '1' && i !== 0 && selectedTopics[i-1].id !== '0' && selectedTopics[i-1].id !== '1'  && selectedLevel >= i"
+                >
+                  <ion-input
+                    [(ngModel)]="level.name"
+                    clearInput
+                    clearOnEdit
+                    inputmode="text"
+                    value=""
+                    placeholder="New topic name...."
+                  >
+                    <ion-button
+                      style="font-size: 10px; order: 1"
+                      fill="solid"
+                      size="small"
+                      color="{{level.name ? 'success' : 'warning'}}"
+                      disabled="{{level.name ? false : true}}"
+                      (click)="createNewTopic(level.level, level.name)"
+                    >
+                      <ion-icon name="checkmark-outline"></ion-icon>
+                    </ion-button>
+                  </ion-input>
+                </ion-col>
+              </ion-row>
+            </ion-grid>
+          </ion-card-content>
+          <hr class="new" />
+
+          <ion-input
+            style="background-color: white; color: black"
+            [(ngModel)]="path"
+          >
+          </ion-input>
+          <ion-input
+            style="background-color: pink; color: black"
+            [(ngModel)]="level"
+          >
+          </ion-input>
+
+          <ion-card-content *ngIf="!isConverting; else stop_convert">
+            <ion-button expand="block" (click)="Convert()"
+              >START CONVERSION</ion-button
+            >
+          </ion-card-content>
+          <ng-template #stop_convert>
+            <ion-card-content>
+              <ion-grid>
+                <ion-row>
+                  <ion-col size="6" style="display: flex">
+                    <ion-text position="stacked" class="sub-text"
+                      >{{convertedFiles}}/{{totalFiles}}</ion-text
+                    >
+                  </ion-col>
+                  <ion-col
+                    size="6"
+                    style="display: flex; justify-content: flex-end"
+                  >
+                    <ion-spinner
+                      name="lines-small"
+                      style="width: 20px; color: var(--ion-color-warning)"
+                      *ngIf="progressLoading"
+                    ></ion-spinner>
+                    <ion-text
+                      position="stacked"
+                      class="sub-text"
+                      style="
+                        color: var(--ion-color-warning);
+                        margin-right: 10px;
+                      "
+                      *ngIf="progressLoading"
+                    >
+                      Uploading to IPFS
+                    </ion-text>
+                    <ion-text position="stacked" class="sub-text"
+                      >{{progressionStatus*100 | number: '1.0-0'}} %</ion-text
+                    >
+                  </ion-col>
+                </ion-row>
+                <ion-row>
+                  <ion-progress-bar
+                    color="primary"
+                    value="{{progressionStatus}}"
+                  ></ion-progress-bar>
+                </ion-row>
+              </ion-grid>
+            </ion-card-content>
+            <ion-card-content>
+              <ion-button expand="block" (click)="Cancel()">STOP</ion-button>
+            </ion-card-content>
+          </ng-template>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</ion-content>

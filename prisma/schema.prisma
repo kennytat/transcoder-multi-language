@@ -1,0 +1,220 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev-ede.db"
+}
+
+model Root {
+  id        String   @id @default("00000000-0000-0000-0000-000000000000")
+  dblevel   Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  name      String   @default("VGM-Root")
+  children  Level1[]
+}
+
+model Level1 {
+  // auto generate
+  id        String   @id
+  pid       String
+  dblevel   Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // topic & item fields
+  location  String
+  isLeaf    Boolean? @default(false)
+  isVideo   Boolean
+  url       String   @default("")
+  name      String
+  count     Int      @default(0)
+  // parent children list
+  parent    Root     @relation(fields: [pid], references: [id])
+  children  Level2[]
+
+  @@unique([pid, name])
+}
+
+model Level2 {
+  // auto generate
+  id        String   @id @default(uuid())
+  pid       String
+  dblevel   Int      @default(2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // topic & item fields
+  location  String   @default("")
+  isVideo   Boolean
+  url       String   @default("")
+  name      String
+  count     Int      @default(0)
+  isLeaf    Boolean?
+  // item only fields
+  keyword   String?
+  thumb     String?
+  qm        String?
+  hash      String?
+  audience  Int?
+  mtime     Int?
+  viewCount Int?
+  duration  String?
+  size      Float?
+  // children list
+  // parent children list
+  parent    Level1   @relation(fields: [pid], references: [id])
+  children  Level3[]
+
+  @@unique([pid, name])
+}
+
+model Level3 {
+  // auto generate
+  id        String   @id @default(uuid())
+  pid       String
+  dblevel   Int      @default(3)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // topic & item fields
+  location  String   @default("")
+  isVideo   Boolean
+  url       String   @default("")
+  name      String
+  count     Int      @default(0)
+  isLeaf    Boolean?
+  // item only fields
+  keyword   String?
+  thumb     String?
+  qm        String?
+  hash      String?
+  audience  Int?
+  mtime     Int?
+  viewCount Int?
+  duration  String?
+  size      Float?
+  parent    Level2   @relation(fields: [pid], references: [id])
+  children  Level4[]
+
+  @@unique([pid, name])
+}
+
+model Level4 {
+  // auto generate
+  id        String   @id @default(uuid())
+  pid       String
+  dblevel   Int      @default(4)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // topic & item fields
+  location  String   @default("")
+  isVideo   Boolean
+  url       String   @default("")
+  name      String
+  count     Int      @default(0)
+  isLeaf    Boolean?
+  // item only fields
+  keyword   String?
+  thumb     String?
+  qm        String?
+  hash      String?
+  audience  Int?
+  mtime     Int?
+  viewCount Int?
+  duration  String?
+  size      Float?
+  parent    Level3   @relation(fields: [pid], references: [id])
+  children  Level5[]
+
+  @@unique([pid, name])
+}
+
+model Level5 {
+  // auto generate
+  id        String   @id @default(uuid())
+  pid       String
+  dblevel   Int      @default(5)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // topic & item fields
+  location  String   @default("")
+  isVideo   Boolean
+  url       String   @default("")
+  name      String
+  count     Int      @default(0)
+  isLeaf    Boolean?
+  // item only fields
+  keyword   String?
+  thumb     String?
+  qm        String?
+  hash      String?
+  audience  Int?
+  mtime     Int?
+  viewCount Int?
+  duration  String?
+  size      Float?
+  parent    Level4   @relation(fields: [pid], references: [id])
+  children  Level6[]
+
+  @@unique([pid, name])
+}
+
+model Level6 {
+  // auto generate
+  id        String   @id @default(uuid())
+  pid       String
+  dblevel   Int      @default(6)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // topic & item fields
+  location  String   @default("")
+  isVideo   Boolean
+  url       String   @default("")
+  name      String
+  count     Int      @default(0)
+  isLeaf    Boolean?
+  // item only fields
+  keyword   String?
+  thumb     String?
+  qm        String?
+  hash      String?
+  audience  Int?
+  mtime     Int?
+  viewCount Int?
+  duration  String?
+  size      Float?
+  parent    Level5   @relation(fields: [pid], references: [id])
+  children  Level7[]
+
+  @@unique([pid, name])
+}
+
+model Level7 {
+  // auto generate
+  id        String   @id @default(uuid())
+  pid       String
+  dblevel   Int      @default(7)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // topic & item fields
+  location  String   @default("")
+  isVideo   Boolean
+  url       String   @default("")
+  name      String
+  count     Int      @default(0)
+  isLeaf    Boolean?
+  // item only fields
+  keyword   String?
+  thumb     String?
+  qm        String?
+  hash      String?
+  audience  Int?
+  mtime     Int?
+  viewCount Int?
+  duration  String?
+  size      Float?
+  parent    Level6   @relation(fields: [pid], references: [id])
+  // children Level8[]          ?????????????
+
+  @@unique([pid, name])
+}

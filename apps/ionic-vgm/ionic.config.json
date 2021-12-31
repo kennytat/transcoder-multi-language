@@ -1,0 +1,7 @@
+{
+  "name": "vgm",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}

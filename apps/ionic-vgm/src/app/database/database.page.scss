@@ -1,0 +1,202 @@
+.data-content {
+  position: relative;
+}
+
+.data-btn {
+  width: 100%;
+}
+
+.check-box {
+  margin: 0 10px 0 5px;
+  --size: 13px;
+}
+
+.info-btn {
+  position: absolute;
+  width: calc(50% - 30px);
+  left: 50%;
+  top: 55px;
+  display: flex;
+  justify-content: space-between;
+  ion-label {
+    line-height: 30px;
+    margin-left: 20px;
+    color: var(--ion-color-dark);
+    span {
+      font-weight: bold;
+      color: var(--ion-color-primary);
+    }
+  }
+  ion-button {
+    width: 50px;
+    padding: 0 2px 0 2px;
+  }
+}
+ion-card-content {
+  height: auto;
+}
+.data-info {
+  position: absolute;
+  width: 50%;
+  float: right;
+  left: 50%;
+  top: 100px;
+  z-index: 1;
+  label {
+    padding: 0 10px 0 0;
+  }
+  ion-button {
+    width: 50px;
+    padding: 0 2px 0 2px;
+  }
+  ion-col {
+    height: calc(100vh - 400px);
+    min-width: 80px;
+    padding: 0;
+    overflow: scroll;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+    ::placeholder {
+      color: var(--ion-color-dark-shade);
+    }
+    [placeholder~='unpublished'] {
+      &::placeholder {
+        color: red !important;
+      }
+    }
+    .file-info {
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(var(--ion-color-dark-rgb), 0.5);
+      display: flex;
+      .file-info-container {
+        flex-direction: column;
+        width: 100%;
+        .file-info-segment {
+          flex-direction: column;
+          ion-input {
+            --padding-start: 0px;
+            --padding-end: 0px;
+            --padding-top: 0px;
+            --padding-bottom: 0px;
+            --placeholder-opacity: 0.8;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            &.has-focus {
+              border-bottom: 1px solid var(--ion-color-primary);
+              color: var(--ion-color-dark);
+            }
+          }
+        }
+      }
+      ion-thumbnail {
+        width: 100px;
+        height: 100px;
+        padding: 10px;
+        img {
+          border: none;
+        }
+      }
+      div {
+        display: flex;
+        ion-label {
+          width: 80px;
+          padding: 1px;
+          line-height: -20px;
+        }
+        select {
+          width: 100%;
+          background-color: transparent;
+          border: none;
+          outline: none;
+          option {
+            background-color: var(--ion-color-light);
+          }
+        }
+
+        input[type='text'] {
+          width: 100%;
+          background-color: transparent;
+          border: none;
+          outline: none;
+        }
+
+        input[type='text']:disabled::placeholder {
+          color: rgba(var(--ion-color-dark-rgb), 0.5);
+        }
+
+        input[type='text']:focus {
+          border-bottom: 1px solid var(--ion-color-primary);
+          &::placeholder {
+            color: var(--ion-color-primary);
+          }
+        }
+      }
+    }
+  }
+}
+
+:host ::ng-deep {
+  ngx-treeview {
+    ngx-treeview-item {
+      width: 50%;
+    }
+    // .treeview-container need to delete all line which include "maxHeight" word in ngx-treeview.js node library
+    .treeview-container {
+      width: 50%;
+      height: calc(100vh - 330px);
+      max-height: calc(100vh - 330px) !important;
+      &::-webkit-scrollbar {
+        display: none;
+      }
+    }
+
+    .row-item {
+      display: flex;
+    }
+    .form-control {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid;
+      border-color: var(--ion-color-light-shade);
+      border-radius: 4px;
+      resize: vertical;
+      background-color: var(--ion-color-light-tint);
+      color: var(--ion-color-dark);
+    }
+    .col-12 {
+      display: flex;
+      justify-content: space-between;
+      padding-bottom: 10px;
+    }
+    .dropdown-divider {
+      border-top: 1px solid;
+      border-color: var(--ion-color-light-tint);
+      padding-bottom: 10px;
+    }
+    // need to fix checkbox and collapse default in ngx-treeview.js node library
+    input[type='checkbox'] {
+      display: none;
+      border-radius: 50px;
+    }
+    input[type='checkbox']:checked {
+      display: inline-block;
+    }
+    .form-check-label {
+      padding: 2px;
+      border-radius: 2px;
+      color: var(--ion-color-dark);
+      cursor: pointer;
+    }
+    .form-check-label:hover {
+      background-color: rgba(var(--ion-color-warning-rgb), 0.5);
+    }
+    input[type='checkbox']:checked ~ .form-check-label {
+      color: var(--ion-color-dark);
+      margin-left: 5px;
+      padding: 1px 5px 1px 1px;
+      font-weight: bold;
+    }
+  }
+}

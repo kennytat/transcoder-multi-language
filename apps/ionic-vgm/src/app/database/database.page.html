@@ -1,0 +1,308 @@
+<ion-content [fullscreen]="true" class="tab-content">
+  <ion-grid>
+    <ion-row class="row">
+      <ion-col class="col">
+        <ion-card class="card">
+          <ion-item>
+            <ion-icon
+              name="git-network-outline"
+              slot="start"
+              color="{{_dbInit ? 'primary' : ''}}"
+            ></ion-icon>
+            <ion-label>
+              {{ _dbInit ? 'Database Connected' : 'Connect Database' }}
+            </ion-label>
+            <ion-button
+              fill="outline"
+              slot="end"
+              style="font-size: 17px"
+              (click)="test()"
+            >
+              test
+            </ion-button>
+
+            <ion-button
+              fill="clear"
+              slot="end"
+              style="margin: 0; font-size: 17px"
+              color="warning"
+              (click)="exportAPI()"
+            >
+              <ion-icon name="download-outline"> </ion-icon>
+            </ion-button>
+            <ion-button
+              fill="clear"
+              slot="end"
+              style="margin: 0; font-size: 17px"
+              color="{{_searchInit ? 'success' : 'dark'}}"
+              (click)="uploadDB()"
+              [disabled]="!_searchInit"
+            >
+              <ion-icon name="cloud-upload-outline"> </ion-icon>
+            </ion-button>
+            <ion-button
+              fill="clear"
+              slot="end"
+              (click)="refreshDB()"
+              style="margin: 0; font-size: 17px"
+              color="primary"
+              ><ion-icon name="sync-circle-outline"> </ion-icon>
+            </ion-button>
+          </ion-item>
+
+          <ion-item>
+            <ion-button
+              color="{{isVideo ? 'primary' : 'light'}}"
+              class="data-btn"
+              (click)="showDiv('V')"
+              >Video</ion-button
+            >
+            <ion-button
+              color="{{isVideo ? 'light' : 'primary'}}"
+              class="data-btn"
+              (click)="showDiv('A')"
+              >Audio</ion-button
+            >
+          </ion-item>
+          <ion-card-content>
+            <div style="position: relative; height: calc(100vh - 225px)">
+              <div *ngIf="isVideo; else isAudio" class="data-content">
+                <ngx-treeview
+                  [items]="videoTree"
+                  [config]="config"
+                  (selectedChange)="treeSelectedChange($event)"
+                  (filterChange)="treeFilterChange($event)"
+                >
+                </ngx-treeview>
+              </div>
+
+              <ng-template #isAudio>
+                <div class="data-content">
+                  <ngx-treeview
+                    [items]="audioTree"
+                    [config]="config"
+                    (selectedChange)="treeSelectedChange($event)"
+                    (filterChange)="treeFilterChange($event)"
+                  >
+                  </ngx-treeview>
+                </div>
+              </ng-template>
+
+              <div *ngIf="selectedFilesID" class="info-btn">
+                <div>
+                  <ion-label
+                    >FILE INFO (<span>{{ selectedFileCount }}</span>
+                    selected)</ion-label
+                  >
+                </div>
+                <div>
+                  <ion-button
+                    size="small"
+                    color="warning"
+                    shape="round"
+                    style="font-size: xx-small"
+                    *ngIf="mainFn"
+                    (click)="modifyDBBtn('edit')"
+                    >Edit</ion-button
+                  >
+                  <ion-button
+                    size="small"
+                    color="success"
+                    shape="round"
+                    style="font-size: xx-small"
+                    *ngIf="editFn"
+                    (click)="execDBConfirmation('updateDB')"
+                    >Update</ion-button
+                  >
+                  <ion-button
+                    size="small"
+                    color="danger"
+                    shape="round"
+                    style="font-size: xx-small"
+                    *ngIf="editFn"
+                    (click)="execDBConfirmation('deleteDB')"
+                    >Delete</ion-button
+                  >
+                  <ion-button
+                    size="small"
+                    color="warning"
+                    shape="round"
+                    style="font-size: xx-small"
+                    *ngIf="editFn"
+                    (click)="modifyDBBtn('cancel')"
+                    >Cancel</ion-button
+                  >
+                </div>
+              </div>
+              <div class="data-info">
+                <ion-grid *ngIf="selectedFileInfo[0]">
+                  <ion-row
+                    style="
+                      padding-bottom: 10px;
+                      border-bottom: 1px solid
+                        rgba(var(--ion-color-dark-rgb), 0.5);
+                    "
+                  >
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked
+                        value="nameFilter"
+                        #name
+                        (change)="checkFilter(name.value, name.checked)"
+                      />
+                      Name
+                    </label>
+
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked="checked"
+                        value="pathFilter"
+                        #path
+                        (change)="checkFilter(path.value, path.checked)"
+                      />
+                      Path
+                    </label>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked="checked"
+                        value="publishFilter"
+                        #publish
+                        (change)="checkFilter(publish.value, publish.checked)"
+                      />
+                      Publish</label
+                    >
+
+                    <label
+                      ><input
+                        type="checkbox"
+                        checked="checked"
+                        value="metaFilter"
+                        #meta
+                        (change)="checkFilter(meta.value, meta.checked)"
+                      />
+                      Metadata
+                    </label>
+                  </ion-row>
+                  <ion-row>
+                    <ion-col>
+                      <div
+                        class="file-info"
+                        *ngFor="let file of selectedFileInfo; index as i"
+                      >
+                        <div class="file-info-container">
+                          <div class="file-info-segment" *ngIf="nameFilter">
+                            <div>
+                              <ion-label>Name</ion-label>
+                              <ion-input
+                                [ngModel]="file.name"
+                                type="text"
+                                clearOnEdit
+                                placeholder="{{file.name}}"
+                                value=""
+                                [style.pointerEvents]="mainFn ? 'none' : ''"
+                              >
+                              </ion-input>
+                            </div>
+                          </div>
+                          <div class="file-info-segment" *ngIf="pathFilter">
+                            <div>
+                              <ion-label>Location</ion-label>
+                              <ion-input
+                                type="text"
+                                placeholder="{{ file.location}}"
+                                value=""
+                                [style.pointerEvents]="'none'"
+                              ></ion-input>
+                            </div>
+                          </div>
+                          <div class="file-info-segment" *ngIf="publishFilter">
+                            <div>
+                              <ion-label>Hash</ion-label>
+                              <ion-input
+                                type="text"
+                                placeholder="{{ file.hash !== null ? file.hash : 'unpublished' }}"
+                                value=""
+                                [style.pointerEvents]="'none'"
+                              ></ion-input>
+                            </div>
+                            <div>
+                              <ion-label>URL</ion-label>
+                              <ion-input
+                                type="text"
+                                placeholder="{{file.url}}"
+                                value=""
+                                [style.pointerEvents]="'none'"
+                              ></ion-input>
+                            </div>
+                            <div>
+                              <ion-label>Qm</ion-label>
+                              <ion-input
+                                type="text"
+                                placeholder="{{file.qm}}"
+                                value=""
+                                [style.pointerEvents]="'none'"
+                              ></ion-input>
+                            </div>
+                          </div>
+
+                          <div class="file-info-segment" *ngIf="metaFilter">
+                            <div>
+                              <ion-label>Updated</ion-label>
+                              <ion-input
+                                type="text"
+                                placeholder="{{file.updatedAt | date }}"
+                                value=""
+                                [style.pointerEvents]="'none'"
+                              ></ion-input>
+                            </div>
+                            <div>
+                              <ion-label>Keyword</ion-label>
+                              <ion-input
+                                [ngModel]="file.keyword"
+                                type="text"
+                                placeholder="{{file.keyword}}"
+                                value=""
+                                [style.pointerEvents]="mainFn ? 'none' : ''"
+                              ></ion-input>
+                            </div>
+
+                            <div>
+                              <ion-label>Duration</ion-label>
+                              <ion-input
+                                type="text"
+                                placeholder="{{file.duration}}"
+                                value=""
+                                [style.pointerEvents]="'none'"
+                              ></ion-input>
+                            </div>
+                            <div>
+                              <ion-label>Size</ion-label>
+                              <ion-input
+                                type="text"
+                                placeholder="{{file.size}}"
+                                value=""
+                                [style.pointerEvents]="'none'"
+                              ></ion-input>
+                            </div>
+                          </div>
+                        </div>
+                        <!-- <div *ngIf="metaFilter && file.hash">
+                            <ion-thumbnail>
+                              <img [src]="getThumbnail(file.hash, file.url)" />
+                            </ion-thumbnail>
+                          </div> -->
+                      </div>
+                    </ion-col>
+                  </ion-row>
+                </ion-grid>
+              </div>
+            </div>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</ion-content>

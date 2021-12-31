@@ -1,0 +1,6 @@
+{
+  "appId": "com.example.app",
+  "appName": "vgm",
+  "bundledWebRuntime": false,
+  "webDir": "www"
+}

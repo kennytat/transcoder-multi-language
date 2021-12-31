@@ -1,0 +1,45 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="secondary">
+      <!-- <ion-button>
+        <ion-icon slot="icon-only" name="person-circle"></ion-icon>
+      </ion-button> -->
+      <!-- <ion-button>
+        <ion-icon slot="icon-only" name="setting-outline"></ion-icon>
+      </ion-button> -->
+      <ion-icon slot="icon-only" name="moon" style="font-size: 20px"></ion-icon>
+      <ion-toggle color="primary" checked (ionChange)="darkModeChange($event)">
+      </ion-toggle>
+    </ion-buttons>
+    <ion-buttons slot="primary">
+      <!-- <ion-button>
+        <ion-icon name="settings-outline"></ion-icon>
+      </ion-button> -->
+      <ion-button color="secondary" (click)="editSetting()">
+        <ion-icon slot="icon-only" name="settings-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title size="small"><strong>VGM TRANSCODING TOOL</strong></ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-tabs>
+  <ion-tab-bar slot="bottom" mode="ios">
+    <ion-card>
+      <div>
+        <ion-tab-button tab="database">
+          <ion-icon name="server-outline"></ion-icon>
+          <ion-label>Database</ion-label>
+        </ion-tab-button>
+        <ion-tab-button tab="ipfs">
+          <ion-icon name="cube-outline"></ion-icon>
+          <ion-label>IPFS</ion-label>
+        </ion-tab-button>
+        <ion-tab-button tab="converter">
+          <ion-icon name="sync-outline"></ion-icon>
+          <ion-label>Converter</ion-label>
+        </ion-tab-button>
+      </div>
+    </ion-card>
+  </ion-tab-bar>
+</ion-tabs>
