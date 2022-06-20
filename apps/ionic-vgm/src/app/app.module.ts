@@ -11,22 +11,21 @@ import { AppComponent } from './app.component';
 import { NgxElectronModule } from 'ngx-electron';
 import { GraphQLModule } from './graphql.module';
 import { HttpClientModule } from '@angular/common/http';
-
 @NgModule({
-  declarations: [AppComponent],
-  entryComponents: [],
-  imports: [
-    BrowserModule,
-    CoreModule,
-    SharedModule,
-    IonicModule.forRoot(),
-    AppRoutingModule,
-    NgxElectronModule,
-    GraphQLModule,
-    HttpClientModule
-  ],
-  providers: [{ provide: RouteReuseStrategy, useClass: IonicRouteStrategy }],
-  bootstrap: [AppComponent],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA]
+	declarations: [AppComponent],
+	entryComponents: [],
+	imports: [
+		BrowserModule,
+		CoreModule,
+		SharedModule,
+		IonicModule.forRoot(),
+		AppRoutingModule,
+		NgxElectronModule,
+		GraphQLModule,
+		HttpClientModule
+	],
+	providers: [{ provide: RouteReuseStrategy, useClass: IonicRouteStrategy }],
+	bootstrap: [AppComponent],
+	schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class AppModule { }

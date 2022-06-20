@@ -3,7 +3,7 @@
   "cli": {
     "defaultCollection": "@nstudio/xplat"
   },
-  "defaultProject": "vgm",
+  "defaultProject": "ionic-vgm",
   "schematics": {
     "@nrwl/angular": {
       "application": {
@@ -32,115 +32,16 @@
     }
   },
   "projects": {
-    "vgm": {
-      "projectType": "application",
-      "root": "apps/vgm",
-      "sourceRoot": "apps/vgm/src",
-      "prefix": "vgm-converter",
-      "architect": {
-        "build": {
-          "builder": "@angular-devkit/build-angular:browser",
-          "options": {
-            "outputPath": "dist/apps/vgm",
-            "index": "apps/vgm/src/index.html",
-            "main": "apps/vgm/src/main.ts",
-            "polyfills": "apps/vgm/src/polyfills.ts",
-            "tsConfig": "apps/vgm/tsconfig.app.json",
-            "inlineStyleLanguage": "scss",
-            "assets": [
-              "apps/vgm/src/favicon.ico",
-              "apps/vgm/src/assets"
-            ],
-            "styles": [
-              "apps/vgm/src/styles.scss"
-            ],
-            "scripts": []
-          },
-          "configurations": {
-            "production": {
-              "budgets": [
-                {
-                  "type": "initial",
-                  "maximumWarning": "500kb",
-                  "maximumError": "1mb"
-                },
-                {
-                  "type": "anyComponentStyle",
-                  "maximumWarning": "2kb",
-                  "maximumError": "4kb"
-                }
-              ],
-              "fileReplacements": [
-                {
-                  "replace": "apps/vgm/src/environments/environment.ts",
-                  "with": "apps/vgm/src/environments/environment.prod.ts"
-                }
-              ],
-              "outputHashing": "all"
-            },
-            "development": {
-              "buildOptimizer": false,
-              "optimization": false,
-              "vendorChunk": true,
-              "extractLicenses": false,
-              "sourceMap": true,
-              "namedChunks": true
-            }
-          },
-          "defaultConfiguration": "production"
-        },
-        "serve": {
-          "builder": "@angular-devkit/build-angular:dev-server",
-          "configurations": {
-            "production": {
-              "browserTarget": "vgm:build:production"
-            },
-            "development": {
-              "browserTarget": "vgm:build:development"
-            }
-          },
-          "defaultConfiguration": "development",
-          "options": {
-            "proxyConfig": "apps/vgm/proxy.conf.json"
-          }
-        },
-        "extract-i18n": {
-          "builder": "@angular-devkit/build-angular:extract-i18n",
-          "options": {
-            "browserTarget": "vgm:build"
-          }
-        },
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": [
-              "apps/vgm/src/**/*.ts",
-              "apps/vgm/src/**/*.html"
-            ]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "outputs": [
-            "coverage/apps/vgm"
-          ],
-          "options": {
-            "jestConfig": "apps/vgm/jest.config.js",
-            "passWithNoTests": true
-          }
-        }
-      }
-    },
-    "vgm-e2e": {
-      "root": "apps/vgm-e2e",
-      "sourceRoot": "apps/vgm-e2e/src",
+    "ionic-vgm-e2e": {
+      "root": "apps/ionic-vgm-e2e",
+      "sourceRoot": "apps/ionic-vgm-e2e/src",
       "projectType": "application",
       "architect": {
         "e2e": {
           "builder": "@nrwl/cypress:cypress",
           "options": {
-            "cypressConfig": "apps/vgm-e2e/cypress.json",
-            "tsConfig": "apps/vgm-e2e/tsconfig.e2e.json",
+            "cypressConfig": "apps/ionic-vgm-e2e/cypress.json",
+            "tsConfig": "apps/ionic-vgm-e2e/tsconfig.e2e.json",
             "devServerTarget": "vgm:serve:development"
           },
           "configurations": {
@@ -153,7 +54,7 @@
           "builder": "@nrwl/linter:eslint",
           "options": {
             "lintFilePatterns": [
-              "apps/vgm-e2e/**/*.{js,ts}"
+              "apps/ionic-vgm-e2e/**/*.{js,ts}"
             ]
           }
         }
@@ -499,7 +400,11 @@
             "allowedCommonJsDependencies": [
               "lodash",
               "zen-observable",
-              "crypto-js"
+              "crypto-js",
+              "p-any",
+              "p-queue",
+							"p-all",
+              "meilisearch"
             ],
             "outputPath": "apps/ionic-vgm/www",
             "index": "apps/ionic-vgm/src/index.html",
@@ -657,6 +562,15 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
+            "allowedCommonJsDependencies": [
+              "lodash",
+              "zen-observable",
+              "crypto-js",
+              "p-any",
+              "p-queue",
+							"p-all",
+              "meilisearch"
+            ],
             "outputPath": "dist/apps/electron-vgm",
             "index": "apps/ionic-vgm/src/index.html",
             "main": "apps/ionic-vgm/src/main.ts",

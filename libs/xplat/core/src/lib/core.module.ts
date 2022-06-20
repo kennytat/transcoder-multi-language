@@ -1,9 +1,9 @@
 import {
-  ModuleWithProviders,
-  NgModule,
-  Optional,
-  SkipSelf,
-  Inject,
+	ModuleWithProviders,
+	NgModule,
+	Optional,
+	SkipSelf,
+	Inject,
 } from '@angular/core';
 import { APP_BASE_HREF, CommonModule } from '@angular/common';
 
@@ -24,38 +24,38 @@ import { DataService } from './services/data.service';
 LogService.DEBUG.LEVEL_4 = !environment.production;
 
 @NgModule({
-  imports: [CommonModule],
+	imports: [CommonModule],
 })
 export class CoreModule {
-  // configuredProviders: *required to configure WindowService and others per platform
-  static forRoot(
-    configuredProviders: Array<any>
-  ): ModuleWithProviders<CoreModule> {
-    return {
-      ngModule: CoreModule,
-      providers: [
-        LogService,
-        WindowService,
-        DataService,
-        {
-          provide: APP_BASE_HREF,
-          useValue: '/',
-        },
-        ...configuredProviders,
-      ],
-    };
-  }
+	// configuredProviders: *required to configure WindowService and others per platform
+	static forRoot(
+		configuredProviders: Array<any>
+	): ModuleWithProviders<CoreModule> {
+		return {
+			ngModule: CoreModule,
+			providers: [
+				LogService,
+				WindowService,
+				DataService,
+				{
+					provide: APP_BASE_HREF,
+					useValue: '/',
+				},
+				...configuredProviders,
+			],
+		};
+	}
 
-  constructor(
-    @Optional()
-    @SkipSelf()
-    parentModule: CoreModule,
-    @Inject(PlatformLanguageToken) lang: string,
-    translate: TranslateService
-  ) {
-    throwIfAlreadyLoaded(parentModule, 'CoreModule');
-
-    // ensure default platform language is set
-    translate.use(lang);
-  }
+	constructor(
+		@Optional()
+		@SkipSelf()
+		parentModule: CoreModule,
+		@Inject(PlatformLanguageToken) lang: string,
+		translate: TranslateService
+	) {
+		throwIfAlreadyLoaded(parentModule, 'CoreModule');
+		translate.setDefaultLang('en');
+		// ensure default platform language is set
+		translate.use('en');
+	}
 }

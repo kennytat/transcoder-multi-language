@@ -1,49 +1,49 @@
 <ion-header class="ion-no-border">
   <ion-toolbar>
-    <ion-title>Header - No Border</ion-title>
+    <ion-title>{{ 'setting.title' | translate }}</ion-title>
   </ion-toolbar>
+  <ion-segment
+    (ionChange)="segmentChanged($event)"
+    scrollable
+    value="{{ rcloneConf[0].id }}"
+  >
+    <ion-segment-button *ngFor="let conf of rcloneConf" value="{{ conf.id }}">
+      <ion-label>{{ conf.id }}</ion-label>
+    </ion-segment-button>
+  </ion-segment>
 </ion-header>
 <ion-content>
-  <ion-grid>
-    <ion-item style="--border-style: none">
-      <ion-label color="primary" style="font-weight: bold; text-align: center">
-        Chia Sẻ
-      </ion-label>
-    </ion-item>
-    <ion-list>
-      <ion-button
-        color="primary"
-        fill="clear"
-        size="large"
-        target="_blank"
-        [href]="facebookLink"
-        (click)="dismiss()"
+  <ion-card>
+    <ion-card-content *ngFor="let conf of rcloneConf; index as i">
+      <ion-list *ngIf="selectedTab === conf.id">
+        <ion-row *ngFor="let item of conf | keyvalue">
+          <ion-item *ngIf="item.key !== 'id' && item.key !== 'status'">
+            <ion-label
+              position="fixed"
+              style="min-width: 150px; font-size: 15px"
+              >{{ item.key | uppercase }}:
+            </ion-label>
+            <ion-input
+              color="primary"
+              debounce="500"
+              [(ngModel)]="conf[item.key]"
+            ></ion-input>
+          </ion-item>
+        </ion-row>
+      </ion-list>
+    </ion-card-content>
+  </ion-card>
+
+  <ion-row style="justify-content: center">
+    <ion-button
+      (click)="saveConf(selectedTab)"
+      [disabled]="checkingConf"
+      color="{{ checkingConf ? 'warning' : 'primary' }}"
+    >
+      <ion-text *ngIf="!checkingConf" style="font-weight: bold">
+        {{ 'setting.save' | translate }}</ion-text
       >
-        <ion-icon name="logo-facebook"></ion-icon>
-      </ion-button>
-      <ion-button
-        color="success"
-        fill="clear"
-        size="large"
-        target="_blank"
-        [href]="whatsappLink"
-        (click)="dismiss()"
-      >
-        <ion-icon name="logo-whatsapp"></ion-icon>
-      </ion-button>
-      <ion-button
-        style="color: #3880ff"
-        fill="clear"
-        size="large"
-        target="_blank"
-        [href]="emailLink"
-        (click)="dismiss()"
-      >
-        <ion-icon name="vgm-gmail"></ion-icon>
-      </ion-button>
-      <ion-button color="dark" fill="clear" size="large" (click)="onLink()">
-        <ion-icon name="link-outline"></ion-icon>
-      </ion-button>
-    </ion-list>
-  </ion-grid>
+      <ion-spinner name="dots" *ngIf="checkingConf"></ion-spinner>
+    </ion-button>
+  </ion-row>
 </ion-content>

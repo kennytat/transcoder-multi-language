@@ -20,7 +20,6 @@
             >
               test
             </ion-button>
-
             <ion-button
               fill="clear"
               slot="end"
@@ -28,18 +27,9 @@
               color="warning"
               (click)="exportAPI()"
             >
-              <ion-icon name="download-outline"> </ion-icon>
-            </ion-button>
-            <ion-button
-              fill="clear"
-              slot="end"
-              style="margin: 0; font-size: 17px"
-              color="{{_searchInit ? 'success' : 'dark'}}"
-              (click)="uploadDB()"
-              [disabled]="!_searchInit"
-            >
               <ion-icon name="cloud-upload-outline"> </ion-icon>
             </ion-button>
+
             <ion-button
               fill="clear"
               slot="end"
@@ -209,10 +199,10 @@
                           </div>
                           <div class="file-info-segment" *ngIf="pathFilter">
                             <div>
-                              <ion-label>Location</ion-label>
+                              <ion-label>MD5</ion-label>
                               <ion-input
                                 type="text"
-                                placeholder="{{ file.location}}"
+                                placeholder="{{ file.md5}}"
                                 value=""
                                 [style.pointerEvents]="'none'"
                               ></ion-input>
@@ -233,15 +223,6 @@
                               <ion-input
                                 type="text"
                                 placeholder="{{file.url}}"
-                                value=""
-                                [style.pointerEvents]="'none'"
-                              ></ion-input>
-                            </div>
-                            <div>
-                              <ion-label>Qm</ion-label>
-                              <ion-input
-                                type="text"
-                                placeholder="{{file.qm}}"
                                 value=""
                                 [style.pointerEvents]="'none'"
                               ></ion-input>

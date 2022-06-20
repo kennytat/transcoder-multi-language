@@ -1,12 +1,12 @@
 {
-  "name": "vgm-converter-other-languages",
+  "name": "vgm-converter",
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
     "ng": "nx",
     "postinstall": "node patch.js && node ./decorate-angular-cli.js && ngcc --properties es2015 browser module main && electron-rebuild install-app-deps",
     "nx": "nx",
-    "start": "ng serve",
+    "start": "ng serve --port=4211",
     "build": "ng build",
     "test": "ng test",
     "lint": "nx workspace-lint && ng lint",
@@ -41,7 +41,7 @@
     "build.electron.vgm.windows": "npm run build.electron.vgm && cd dist/apps/electron-vgm && npx electron-builder build --windows -c.electronVersion 11.1.1",
     "build.electron.vgm.mac": "npm run build.electron.vgm && cd dist/apps/electron-vgm && npx electron-builder build --mac -c.electronVersion 11.1.1",
     "prepare.electron.vgm": "tsc -p apps/electron-vgm/tsconfig.json",
-    "serve.electron.vgm.target": "nx serve electron-vgm --port 4211",
+    "serve.electron.vgm.target": "nx serve electron-vgm --port=4211",
     "serve.electron.vgm": "wait-on http-get://localhost:4211/ && electron apps/electron-vgm/src --serve",
     "start.electron.vgm": "npm run prepare.electron.vgm && npm-run-all -p serve.electron.vgm.target serve.electron.vgm"
   },
@@ -79,17 +79,23 @@
     "apollo-server-express": "^2.25.0",
     "bitwise": "^2.1.0",
     "chinese-to-pinyin": "^1.3.1",
+    "closest-match": "^1.3.3",
     "cors": "^2.8.5",
     "crypto-js": "^4.1.1",
+    "delay": "^5.0.0",
     "graphql": "^15.5.0",
     "graphql-tag": "^2.12.4",
     "graphql-tools": "^7.0.5",
+    "ipfs-http-client": "^54.0.2",
+    "localforage": "^1.10.0",
     "lodash": "^4.17.21",
     "m3u8-file-parser": "^0.2.4",
+    "md5-file": "^5.0.0",
     "meilisearch": "^0.20.0",
-    "nft.storage": "^5.1.3",
     "ngx-electron": "^2.2.0",
     "ngx-treeview": "^10.0.2",
+    "p-all": "^3.0.0",
+    "p-any": "^3.0.0",
     "p-queue": "^6.6.2",
     "reflect-metadata": "^0.1.13",
     "rxjs": "~6.6.0",
@@ -133,12 +139,14 @@
     "@types/jasmine": "~3.6.2",
     "@types/jasminewd2": "~2.0.3",
     "@types/jest": "~26.0.0",
+    "@types/lodash": "^4.14.182",
     "@types/node": "14.17.0",
     "@typescript-eslint/eslint-plugin": "4.19.0",
     "@typescript-eslint/parser": "4.19.0",
     "babel-plugin-graphql-tag": "^3.3.0",
     "codelyzer": "~6.0.0",
     "cypress": "^6.0.1",
+    "cz-conventional-changelog": "^3.3.0",
     "dotenv": "8.2.0",
     "electron": "^11.1.1",
     "electron-builder": "^22.9.1",
@@ -175,5 +183,10 @@
   "xplat": {
     "prefix": "vgm",
     "framework": "angular"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
   }
 }

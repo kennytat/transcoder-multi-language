@@ -1,0 +1,20 @@
+.text-field {
+  ion-label {
+    color: var(--ion-text-color);
+  }
+  textarea {
+    padding: 10px 0;
+    background-color: transparent;
+    color: var(--ion-color-primary);
+    resize: none;
+    width: 100%;
+    height: calc(100vh - 200px);
+    outline: none;
+    border: none;
+  }
+  @media screen and (max-width: 991px) {
+    textarea {
+      height: calc(100vh - 250px);
+    }
+  }
+}

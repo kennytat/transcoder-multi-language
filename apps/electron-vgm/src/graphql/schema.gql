@@ -9,7 +9,7 @@ type Level7 {
   createdAt: DateTime!
   updatedAt: DateTime!
   isLeaf: Boolean
-  location: String!
+  md5: String
   url: String!
   isVideo: Boolean!
   name: String!
@@ -18,6 +18,7 @@ type Level7 {
   thumb: String
   qm: String
   hash: String
+  khash: String
   audience: Int
   mtime: Int
   viewCount: Int
@@ -38,7 +39,7 @@ type Level6 {
   createdAt: DateTime!
   updatedAt: DateTime!
   isLeaf: Boolean
-  location: String!
+  md5: String
   url: String!
   isVideo: Boolean!
   name: String!
@@ -47,6 +48,7 @@ type Level6 {
   thumb: String
   qm: String
   hash: String
+  khash: String
   audience: Int
   mtime: Int
   viewCount: Int
@@ -63,7 +65,7 @@ type Level5 {
   createdAt: DateTime!
   updatedAt: DateTime!
   isLeaf: Boolean
-  location: String!
+  md5: String
   url: String!
   isVideo: Boolean!
   name: String!
@@ -72,6 +74,7 @@ type Level5 {
   thumb: String
   qm: String
   hash: String
+  khash: String
   audience: Int
   mtime: Int
   viewCount: Int
@@ -88,7 +91,7 @@ type Level4 {
   createdAt: DateTime!
   updatedAt: DateTime!
   isLeaf: Boolean
-  location: String!
+  md5: String
   url: String!
   isVideo: Boolean!
   name: String!
@@ -97,6 +100,7 @@ type Level4 {
   thumb: String
   qm: String
   hash: String
+  khash: String
   audience: Int
   mtime: Int
   viewCount: Int
@@ -113,7 +117,7 @@ type Level3 {
   createdAt: DateTime!
   updatedAt: DateTime!
   isLeaf: Boolean
-  location: String!
+  md5: String
   url: String!
   isVideo: Boolean!
   name: String!
@@ -122,6 +126,7 @@ type Level3 {
   thumb: String
   qm: String
   hash: String
+  khash: String
   audience: Int
   mtime: Int
   viewCount: Int
@@ -138,7 +143,7 @@ type Level2 {
   createdAt: DateTime!
   updatedAt: DateTime!
   isLeaf: Boolean
-  location: String!
+  md5: String
   url: String!
   isVideo: Boolean!
   name: String!
@@ -147,6 +152,7 @@ type Level2 {
   thumb: String
   qm: String
   hash: String
+  khash: String
   audience: Int
   mtime: Int
   viewCount: Int
@@ -162,7 +168,7 @@ type Level1 {
   dblevel: Int!
   createdAt: DateTime!
   updatedAt: DateTime!
-  location: String!
+  md5: String
   isLeaf: Boolean
   url: String!
   isVideo: Boolean!
@@ -184,19 +190,19 @@ type Root {
 type Query {
   root(id: String!): Root!
   level1Unique(id: String!): Level1!
-  level1Queries(id: String, isLeaf: Boolean, isVideo: Boolean!): [Level1!]!
+  level1Queries(url: String, id: String, isLeaf: Boolean, isVideo: Boolean): [Level1!]!
   level2Unique(id: String!): Level2!
-  level2Queries(id: String, isLeaf: Boolean, isVideo: Boolean!): [Level2!]!
+  level2Queries(url: String, id: String, isLeaf: Boolean, isVideo: Boolean): [Level2!]!
   level3Unique(id: String!): Level3!
-  level3Queries(id: String, isLeaf: Boolean, isVideo: Boolean!): [Level3!]!
+  level3Queries(url: String, id: String, isLeaf: Boolean, isVideo: Boolean): [Level3!]!
   level4Unique(id: String!): Level4!
-  level4Queries(id: String, isLeaf: Boolean, isVideo: Boolean!): [Level4!]!
+  level4Queries(url: String, id: String, isLeaf: Boolean, isVideo: Boolean): [Level4!]!
   level5Unique(id: String!): Level5!
-  level5Queries(id: String, isLeaf: Boolean, isVideo: Boolean!): [Level5!]!
+  level5Queries(url: String, id: String, isLeaf: Boolean, isVideo: Boolean): [Level5!]!
   level6Unique(id: String!): Level6!
-  level6Queries(id: String, isLeaf: Boolean, isVideo: Boolean!): [Level6!]!
+  level6Queries(url: String, id: String, isLeaf: Boolean, isVideo: Boolean): [Level6!]!
   level7Unique(id: String!): Level7!
-  level7Queries(id: String, isLeaf: Boolean, isVideo: Boolean!): [Level7!]!
+  level7Queries(url: String, id: String, isLeaf: Boolean, isVideo: Boolean): [Level7!]!
 }
 
 type Mutation {
@@ -223,7 +229,7 @@ type Mutation {
 input Level2CreateInput {
   pid: String!
   isLeaf: Boolean
-  location: String!
+  md5: String
   url: String!
   isVideo: Boolean!
   name: String!
@@ -232,6 +238,7 @@ input Level2CreateInput {
   thumb: String
   qm: String
   hash: String
+  khash: String
   audience: Int
   mtime: Int
   viewCount: Int
@@ -243,11 +250,12 @@ input Level2UpdateInput {
   id: String!
   isLeaf: Boolean
   count: Int
-  location: String
+  md5: String
   url: String
   name: String
   keyword: String
   hash: String
+  khash: String
   qm: String
   audience: Int
   mtime: Int
@@ -257,7 +265,7 @@ input Level2UpdateInput {
 input Level3CreateInput {
   pid: String!
   isLeaf: Boolean
-  location: String!
+  md5: String
   url: String!
   isVideo: Boolean!
   name: String!
@@ -266,6 +274,7 @@ input Level3CreateInput {
   thumb: String
   qm: String
   hash: String
+  khash: String
   audience: Int
   mtime: Int
   viewCount: Int
@@ -277,11 +286,12 @@ input Level3UpdateInput {
   id: String!
   isLeaf: Boolean
   count: Int
-  location: String
+  md5: String
   url: String
   name: String
   keyword: String
   hash: String
+  khash: String
   qm: String
   audience: Int
   mtime: Int
@@ -291,7 +301,7 @@ input Level3UpdateInput {
 input Level4CreateInput {
   pid: String!
   isLeaf: Boolean
-  location: String!
+  md5: String
   url: String!
   isVideo: Boolean!
   name: String!
@@ -300,6 +310,7 @@ input Level4CreateInput {
   thumb: String
   qm: String
   hash: String
+  khash: String
   audience: Int
   mtime: Int
   viewCount: Int
@@ -311,11 +322,12 @@ input Level4UpdateInput {
   id: String!
   isLeaf: Boolean
   count: Int
-  location: String
+  md5: String
   url: String
   name: String
   keyword: String
   hash: String
+  khash: String
   qm: String
   audience: Int
   mtime: Int
@@ -325,7 +337,7 @@ input Level4UpdateInput {
 input Level5CreateInput {
   pid: String!
   isLeaf: Boolean
-  location: String!
+  md5: String
   url: String!
   isVideo: Boolean!
   name: String!
@@ -334,6 +346,7 @@ input Level5CreateInput {
   thumb: String
   qm: String
   hash: String
+  khash: String
   audience: Int
   mtime: Int
   viewCount: Int
@@ -345,11 +358,12 @@ input Level5UpdateInput {
   id: String!
   isLeaf: Boolean
   count: Int
-  location: String
+  md5: String
   url: String
   name: String
   keyword: String
   hash: String
+  khash: String
   qm: String
   audience: Int
   mtime: Int
@@ -359,7 +373,7 @@ input Level5UpdateInput {
 input Level6CreateInput {
   pid: String!
   isLeaf: Boolean
-  location: String!
+  md5: String
   url: String!
   isVideo: Boolean!
   name: String!
@@ -368,6 +382,7 @@ input Level6CreateInput {
   thumb: String
   qm: String
   hash: String
+  khash: String
   audience: Int
   mtime: Int
   viewCount: Int
@@ -379,11 +394,12 @@ input Level6UpdateInput {
   id: String!
   isLeaf: Boolean
   count: Int
-  location: String
+  md5: String
   url: String
   name: String
   keyword: String
   hash: String
+  khash: String
   qm: String
   audience: Int
   mtime: Int
@@ -393,7 +409,7 @@ input Level6UpdateInput {
 input Level7CreateInput {
   pid: String!
   isLeaf: Boolean
-  location: String!
+  md5: String
   url: String!
   isVideo: Boolean!
   name: String!
@@ -402,6 +418,7 @@ input Level7CreateInput {
   thumb: String
   qm: String
   hash: String
+  khash: String
   audience: Int
   mtime: Int
   viewCount: Int
@@ -413,11 +430,12 @@ input Level7UpdateInput {
   id: String!
   isLeaf: Boolean
   count: Int
-  location: String
+  md5: String
   url: String
   name: String
   keyword: String
   hash: String
+  khash: String
   qm: String
   audience: Int
   mtime: Int

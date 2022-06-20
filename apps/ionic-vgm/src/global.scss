@@ -70,41 +70,38 @@ hr.new {
 }
 
 :root {
-  .share-modal {
-    --width: 500px;
-    --height: 500px;
+	.toast-success {
+    text-align: center !important;
+		--background:var(--ion-color-success); 
+		font-weight: bold;
+    color: black;
+  }
+	.toast-error {
+    text-align: center !important;
+		--background: var(--ion-color-warning);
+		font-weight: bold;
+    color: black;
+  }
+  .setting-modal {
+    --width: 600px;
+    --height: 600px;
     ion-content {
       --padding-start: 10px;
-      --padding-top: 10px;
       --padding-bottom: 10px;
       --padding-end: 10px;
-      ion-grid {
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
+      ion-card {
+				ion-card-content {
+					padding-top: 0;
+					padding-bottom: 0;
+				}
         ion-list {
           justify-content: center;
-          ion-button {
-            --padding-start: 5px;
-            --padding-top: 5px;
-            --padding-bottom: 5px;
-            --padding-end: 5px;
-            height: 60px;
-            width: 60px;
-            background-color: var(--ion-color-light);
-            margin: 10px;
-            font-size: 30px;
-            /* border-radius */
-            -webkit-border-radius: 50%;
-            -moz-border-radius: 50%;
-            border-radius: 50%;
-            /* box-shadow */
-            -webkit-box-shadow: rgb(0 0 0 / 50%) 1px 3px 3px;
-            -moz-box-shadow: rgb(0 0 0 / 50%) 1px 3px 3px;
-            box-shadow: rgb(0 0 0 / 50%) 1px 3px 3px;
-          }
+					ion-row {
+						ion-item {
+							width: 100%;
+							--padding-start: 0
+						}
+					}
         }
       }
     }

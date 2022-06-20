@@ -1,3 +1,48 @@
 {
-  "hello": "Hello xplat"
+	"app": {
+		"title": "VGM TRANSCODING TOOL"
+	},
+  "setting": {
+		"title": "S3 Configuration",	
+		"warehouse": "S3-Warehouse",
+		"encrypted": "S3-Encrypted",	
+		"ipfs": "IPFS Gateway",
+		"save":"save",
+		"s3" : {
+			"type": "Type:",
+			"provider": "Provider:",
+			"key": "Access Key:",
+			"secret": "Secret Key:",
+			"endpoint": "Endpoint:",
+			"acl": "ACL:",
+			"bucket": "Bucket:",
+			"gateway":" Gateway:",
+			"message-success": "Your config connection is valid and has been saved",
+			"message-error": "Can't connect to the server, please try again"
+		}
+	},
+	"database": {
+		"title": "Database",
+		"msg": {
+		"export-api": "Your API has been exported sucessfully",
+		"export-waiting": "Exporting - Please wait",
+		"process-waiting": "Processing database - Please wait",
+		"refresh-waiting": "Refreshing database",
+		"cloud-error": "Please check your cloud connection",
+		"ipfs-error": "Please check your ipfs connection"
+		}
+	},
+	"converter": {
+		"title": "Converter",
+		"subtitle": "M3U8 Streaming Transcoder",
+		"input":"Browse Input Source",
+		"placeholder": "Select input source...",
+		"browse": "browse",
+		"file": "Files only",
+		"database": "Database Location:",
+		"start": "start conversion"
+	},
+	"analytic": {
+		"title": "Analytic"
+	}
 }

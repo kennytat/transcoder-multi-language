@@ -20,8 +20,8 @@ export class Level1 {
   @Field((type) => Date)
   updatedAt: Date
 
-  @Field((type) => String)
-  location: string
+  @Field((type) => String, { nullable: true })
+  md5: string
 
   @Field((type) => Boolean, { nullable: true })
   isLeaf: boolean

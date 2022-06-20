@@ -1,0 +1,32 @@
+<ion-content [fullscreen]="true" class="tab-content">
+  <ion-grid>
+    <ion-row class="row">
+      <ion-col class="col">
+        <ion-card class="card">
+          <div>
+            <ion-item>
+              <ion-icon
+                name="analytics"
+                slot="start"
+                color="primary"
+              ></ion-icon>
+              <ion-label> Analytics Data </ion-label>
+              <ion-button
+                fill="outline"
+                color="primary"
+                slot="end"
+                style="margin-left: 10px; font-weight: bold"
+                >Button</ion-button
+              >
+            </ion-item>
+          </div>
+          <ion-card-content>
+            <div class="text-field">
+              <textarea disabled readonly> Hello </textarea>
+            </div>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</ion-content>

@@ -19,12 +19,9 @@
     }
   },
   "projects": {
-    "vgm": {
-      "tags": []
-    },
-    "vgm-e2e": {
+    "ionic-vgm-e2e": {
       "tags": [],
-      "implicitDependencies": ["vgm"]
+      "implicitDependencies": ["ionic-vgm"]
     },
     "api": {
       "tags": []
