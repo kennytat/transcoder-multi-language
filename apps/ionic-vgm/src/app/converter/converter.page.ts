@@ -55,8 +55,10 @@ export class ConverterPage implements OnInit {
 	updateID: string = '';
 	updateURL: string = '';
 	updateLevel: number = 0;
+	isGPU = true;
 	newDBArray = [];
-	isGPU = false;
+	tasks: string[] = [];
+	concurrency: string = "1";
 	constructor(
 		private _electronService: ElectronService,
 		private zone: NgZone,
@@ -92,8 +94,10 @@ export class ConverterPage implements OnInit {
 		this.selectedLevel = level;
 		if (itemID === this.level1.item.children[0].id) {
 			this.isVideo = true;
+			this.concurrency = '1';
 		} else if (itemID === this.level1.item.children[1].id) {
 			this.isVideo = false;
+			this.concurrency = '20';
 		}
 		this.selectedTopics[level - 1].id = itemID;
 		if (level >= 1 && level < this.selectedTopics.length) {
@@ -169,7 +173,7 @@ export class ConverterPage implements OnInit {
 					id: result.pid,
 					count: pItemCount,
 				};
-				await this._dataService.updateSingle(pItem.dblevel, updateParentOption);
+				if (pItem.dblevel > 1) await this._dataService.updateSingle(pItem.dblevel, updateParentOption);
 				// update UI view
 				this.selectedItem = await _.cloneDeep(result);
 				await this.selectedTopics[level - 1].item.children.push(this.selectedItem);
@@ -178,7 +182,7 @@ export class ConverterPage implements OnInit {
 				resolve(result);
 			}, async (error) => {
 				// query if existing
-				console.log('there was an error sending the query', error, 'try querying existing topic');
+				console.log('there was an error sending the query', error, 'try querying existing topic', pItem, url);
 				const [result]: any = await this.getOptions(pItem.dblevel + 1, pItem.isVideo, undefined, undefined, url);
 				if (result) resolve(result);
 			});
@@ -291,12 +295,14 @@ export class ConverterPage implements OnInit {
 		return new Promise(function (resolve, reject) {
 			let i = 0;
 			while (i < arr.length) {
-				const index = arr[i].children.findIndex(item => item.md5 === md5);
-				if (index > -1) {
-					console.log('found exist:', arr[i].children, md5);
-					resolve(arr[i].children[index])
-					break;
-				};
+				if (arr[i].children) {
+					const index = arr[i].children.findIndex(item => item.md5 === md5);
+					if (index > -1) {
+						console.log('found exist:', arr[i].children, md5);
+						resolve(arr[i].children[index])
+						break;
+					};
+				}
 				i++
 				if (i === arr.length) { resolve(false) };
 			}
@@ -444,6 +450,7 @@ export class ConverterPage implements OnInit {
 
 	async startConvert(inputPath, fileCheckbox, selectedItem, isVideo, isGPU) {
 		console.log('startConvert Called:', inputPath, selectedItem);
+		this.tasks.push(inputPath);
 		this.isConverting = true;
 		// create directory DB first
 		const dirList = fileCheckbox ? [] : await this._electronService.ipcRenderer.invoke('find-dir-db', inputPath);
@@ -455,7 +462,7 @@ export class ConverterPage implements OnInit {
 		this.totalFiles += fileList.length;
 		console.log('Checking input source', fileList, this.totalFiles);
 
-		queue.concurrency = this.isVideo ? 1 : 20;
+		queue.concurrency = parseInt(this.concurrency);
 		if (fileList.length > 0) {
 			try {
 				let tasks = [];
@@ -467,28 +474,28 @@ export class ConverterPage implements OnInit {
 					if (pItem) {
 						tasks.push(async () => {
 							const md5 = await this._electronService.ipcRenderer.invoke('checksum', file);
+							const fileExist: any = await this.findIndexArray(this.newDBArray, md5);
+							console.log('check file exist:', fileExist);
+							if (fileExist && fileExist.name !== itemName) {
+								console.log('file exist, update item name');
+								const updateItemOption = {
+									id: fileExist.id,
+									name: itemName,
+								};
+								await this._dataService.updateSingle(fileExist.dblevel, updateItemOption);
+							}
+							if (!fileExist) {
+								// start converting files
+								console.log('start converting files', file, pItem);
+								await this._electronService.ipcRenderer.invoke('start-convert', file, md5, pItem, isGPU);
 
-							// const fileExist: any = await this.findIndexArray(this.newDBArray, md5);
-							// console.log('check file exist:', fileExist);
-							// if (fileExist && fileExist.name !== itemName) {
-							// 	console.log('file exist, update item name');
-							// 	const updateItemOption = {
-							// 		id: fileExist.id,
-							// 		name: itemName,
-							// 	};
-							// 	await this._dataService.updateSingle(fileExist.dblevel, updateItemOption);
-							// }
-							// if (!fileExist) {
-							// start converting files
-							console.log('start converting files', file, pItem);
-							await this._electronService.ipcRenderer.invoke('start-convert', file, md5, pItem, isGPU);
-
-							// }
+							}
 							this.convertedFiles++;
 						})
 					}
 				});
 				await Promise.all(tasks.map(task => queue.add(task))).then(async () => {
+					this.tasks.splice(this.tasks.indexOf(inputPath), 1)
 					if (queue.size === 0 && queue.pending === 0) {
 						this.execDone();
 						this._electronService.ipcRenderer.invoke('popup-message', 'exec-done');

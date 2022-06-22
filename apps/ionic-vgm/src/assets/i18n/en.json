@@ -40,7 +40,10 @@
 		"browse": "browse",
 		"file": "Files only",
 		"database": "Database Location:",
-		"start": "start conversion"
+		"add": "add conversion",
+		"create": "Create new topic or update existing",
+		"ipfs":"Uploading to IPFS",
+		"task":"CONVERTING TASKS:"
 	},
 	"analytic": {
 		"title": "Analytic"

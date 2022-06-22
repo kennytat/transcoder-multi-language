@@ -6,6 +6,12 @@
           <ion-item>
             <ion-icon name="folder-open-outline" slot="start"></ion-icon>
             <ion-label>{{'converter.subtitle' | translate}}</ion-label>
+            <ion-text>concurrency:</ion-text>
+            <input
+              type="number"
+              [(ngModel)]="concurrency"
+              style="color: black; width: 40px; margin: 0 10px"
+            />
             <ion-text>CPU</ion-text>
             <ion-toggle [(ngModel)]="isGPU"></ion-toggle>
             <ion-text>GPU</ion-text>
@@ -93,66 +99,97 @@
               </ion-label>
             </div>
             <ion-grid *ngIf="selectedTopics">
-              <ion-row *ngFor="let level of selectedTopics; index as i">
-                <ion-col
-                  size="6"
-                  class="no-vertical-padding"
-                  *ngIf="level.level === 1 || i >= 1 && selectedTopics[i-1].id !== '0' && selectedTopics[i-1].id !== '1' && selectedLevel >= i"
-                >
-                  <select
-                    [(ngModel)]="level.id"
-                    (ngModelChange)="selectOptionChange(level.level, level.id)"
-                    [ngStyle]="{ 'padding-left.px': i * 20, 'color': level.id === '0' ? 'var(--ion-color-success)' : level.id === '1' ? 'var(--ion-color-warning)' :'' }"
-                  >
-                    <option
-                      [ngValue]="'0'"
-                      selected
-                      *ngIf="i === 0 || i >= 1 && level.item.children.length <= 0 || level.item.isLeaf"
+              <ion-row>
+                <ion-col size="5">
+                  <ion-row *ngFor="let level of selectedTopics; index as i">
+                    <ion-col
+                      class="no-vertical-padding"
+                      *ngIf="level.level === 1 || i >= 1 && selectedTopics[i-1].id !== '0' && selectedTopics[i-1].id !== '1' && selectedLevel >= i"
                     >
-                      {{ i === 0 ? 'Select Database' :'Use current categories'}}
-                    </option>
-                    <option
-                      [ngValue]="'1'"
-                      selected
-                      *ngIf="i !== 0 && level.item && !level.item.isLeaf"
-                      style="color: var(--ion-color-warning)"
-                    >
-                      {{ 'Create new topic'}}
-                    </option>
-                    <option
-                      *ngFor="let item of level.item.children, index as i"
-                      [ngValue]="item.id"
-                      style="color: var(--ion-color-dark)"
-                    >
-                      {{item.name}}
-                    </option>
-                  </select>
+                      <select
+                        [(ngModel)]="level.id"
+                        (ngModelChange)="selectOptionChange(level.level, level.id)"
+                        [ngStyle]="{ 'padding-left.px': i * 20, 'color': level.id === '0' ? 'var(--ion-color-success)' : level.id === '1' ? 'var(--ion-color-warning)' :'' }"
+                      >
+                        <option
+                          [ngValue]="'0'"
+                          selected
+                          *ngIf="i === 0 || i >= 1 && level.item.children.length <= 0 || level.item.isLeaf"
+                        >
+                          {{ i === 0?'Select Database':"Use current categories"
+                          }}
+                        </option>
+                        <option
+                          [ngValue]="'1'"
+                          selected
+                          *ngIf="i !== 0 && level.item && !level.item.isLeaf"
+                          style="color: var(--ion-color-warning)"
+                        >
+                          {{ 'converter.create' | translate }}
+                        </option>
+                        <option
+                          *ngFor="let item of level.item.children, index as i"
+                          [ngValue]="item.id"
+                          style="color: var(--ion-color-dark)"
+                        >
+                          {{item.name}}
+                        </option>
+                      </select>
+                    </ion-col>
+                    <!-- <ion-col
+										style="width: 100%"
+										class="no-vertical-padding"
+										*ngIf="level.id === '1' && i !== 0 && selectedTopics[i-1].id !== '0' && selectedTopics[i-1].id !== '1'  && selectedLevel >= i"
+									>
+										<ion-input
+											[(ngModel)]="level.name"
+											clearInput
+											clearOnEdit
+											inputmode="text"
+											value=""
+											placeholder="New topic name...."
+										>
+											<ion-button
+												style="font-size: 10px; order: 1"
+												fill="solid"
+												size="small"
+												color="{{level.name ? 'success' : 'warning'}}"
+												disabled="{{level.name ? false : true}}"
+												(click)="createNewTopic(level.level, level.name)"
+											>
+												<ion-icon name="checkmark-outline"></ion-icon>
+											</ion-button>
+										</ion-input>
+									</ion-col> -->
+                  </ion-row>
                 </ion-col>
-                <!-- <ion-col
-                  style="width: 100%"
-                  class="no-vertical-padding"
-                  *ngIf="level.id === '1' && i !== 0 && selectedTopics[i-1].id !== '0' && selectedTopics[i-1].id !== '1'  && selectedLevel >= i"
+                <ion-col
+                  size="2"
+                  style="
+                    display: grid;
+                    justify-content: center;
+                    align-self: center;
+                  "
                 >
-                  <ion-input
-                    [(ngModel)]="level.name"
-                    clearInput
-                    clearOnEdit
-                    inputmode="text"
-                    value=""
-                    placeholder="New topic name...."
-                  >
-                    <ion-button
-                      style="font-size: 10px; order: 1"
-                      fill="solid"
-                      size="small"
-                      color="{{level.name ? 'success' : 'warning'}}"
-                      disabled="{{level.name ? false : true}}"
-                      (click)="createNewTopic(level.level, level.name)"
-                    >
-                      <ion-icon name="checkmark-outline"></ion-icon>
-                    </ion-button>
-                  </ion-input>
-                </ion-col> -->
+                  <ion-button fill="none" (click)="preConvert()">
+                    <ion-icon
+                      slot="icon-only"
+                      name="arrow-forward-circle"
+                      color="warning"
+                      style="font-size: 35px"
+                    ></ion-icon>
+                  </ion-button>
+                </ion-col>
+                <ion-col size="5">
+                  <ion-row>
+                    <ion-text color="dark">
+                      {{'converter.task' | translate}}
+                    </ion-text>
+                  </ion-row>
+                  <ion-row *ngFor="let task of tasks">
+                    <li>{{ task }}</li>
+                  </ion-row>
+                </ion-col>
               </ion-row>
             </ion-grid>
           </ion-card-content>
@@ -173,14 +210,8 @@
           >
           </ion-input> -->
 
-          <ion-card-content>
-            <ion-button expand="block" (click)="preConvert()"
-              >{{'converter.start' | translate}}</ion-button
-            >
-          </ion-card-content>
-          <hr class="new" />
-          <!-- <ng-template #stop_convert> -->
-          <ion-card-content>
+          <hr class="new" *ngIf="isConverting" />
+          <ion-card-content *ngIf="isConverting">
             <ion-grid>
               <ion-row>
                 <ion-col size="6" style="display: flex">
@@ -203,7 +234,7 @@
                     style="color: var(--ion-color-warning); margin-right: 10px"
                     *ngIf="progressLoading"
                   >
-                    Uploading to IPFS
+                    {{ 'converter.ipfs' | translate }}
                   </ion-text>
                   <ion-text position="stacked" class="sub-text"
                     >{{progressionStatus*100 | number: '1.0-0'}} %</ion-text
@@ -218,10 +249,9 @@
               </ion-row>
             </ion-grid>
           </ion-card-content>
-          <ion-card-content>
+          <ion-card-content *ngIf="isConverting">
             <ion-button expand="block" (click)="cancel()">STOP</ion-button>
           </ion-card-content>
-          <!-- </ng-template> -->
         </ion-card>
       </ion-col>
     </ion-row>
