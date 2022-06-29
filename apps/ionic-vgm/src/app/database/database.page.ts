@@ -289,8 +289,7 @@ export class DatabasePage implements OnInit {
 					await this.presentLoading(this._translateService.instant('database.msg.export-waiting'));
 					if (this._configService.encryptedConf.status) {
 						await this.exportWebAPI();
-						// await this._electronService.ipcRenderer.invoke('upload-api', 'web');
-						await this._electronService.ipcRenderer.invoke('upload-tmp-api', 'web');
+						await this._electronService.ipcRenderer.invoke('upload-api', 'web');
 					} else {
 						await this.presentToast(this._translateService.instant('database.msg.cloud-error'), 'toast-error');
 					}

@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = "file:./dev-hmong.db"
+  url      = "file:./dev-vb.db"
 }
 
 model Root {

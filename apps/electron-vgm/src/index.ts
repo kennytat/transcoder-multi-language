@@ -54,7 +54,7 @@ const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
 	},
 
 };
-export const tmpDir = path.join(os.tmpdir(), app.getName());
+export const tmpDir = path.join(os.tmpdir(), app.getName(), 'vtm');
 
 
 // create graphql server function
