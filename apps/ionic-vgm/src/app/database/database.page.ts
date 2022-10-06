@@ -13,9 +13,6 @@ import { LoadingController, ToastController } from '@ionic/angular';
 import { TranslateService } from '@ngx-translate/core';
 const queue = new Pqueue();
 
-const apiGateway = 'http://find.hjm.bid';
-
-
 @Component({
 	selector: 'vgm-database',
 	templateUrl: 'database.page.html',
@@ -113,17 +110,16 @@ export class DatabasePage implements OnInit {
 				console.log('createDB called', fileInfo);
 				await this.createNewItem(fileInfo);
 			})
-			// this._electronService.ipcRenderer.on('update-ipfs', async (event, fileInfo) => {
-			// 	console.log('update IPFS Hash called', fileInfo);
-			// 	const variables = {
-			// 		id: fileInfo.id,
-			// 		url: fileInfo.url,
-			// 		// khash: fileInfo.khash,
-			// 		// hash: fileInfo.hash,
-			// 		// qm: fileInfo.qm,
-			// 	};
-			// 	await this._dataService.updateSingle(fileInfo.dblevel, variables);
-			// })
+			this._electronService.ipcRenderer.on('update-item', async (event, fileInfo) => {
+				console.log('update IPFS Hash called', fileInfo);
+				const variables = {
+					id: fileInfo.id,
+					khash: fileInfo.khash,
+					hash: fileInfo.hash,
+					// qm: fileInfo.qm,
+				};
+				await this._dataService.updateSingle(fileInfo.dblevel, variables);
+			})
 			// this._electronService.ipcRenderer.on('update-count', async (event, fileInfo) => {
 			// 	console.log('update count called', fileInfo);
 			// 	const variables = {
@@ -186,17 +182,17 @@ export class DatabasePage implements OnInit {
 			}
 		}).subscribe(async ({ data }) => {
 			console.log('created local DB', data);
-			// this.addSearch([data[Object.keys(data)[0]]]);
 			const result: any = data[Object.keys(data)[0]];
-			const [pItem] = _.cloneDeep(await this._dataService.fetchLevelDB(result.dblevel - 1, result.isVideo, undefined, result.pid));
+			let [pItem] = _.cloneDeep(await this._dataService.fetchLevelDB(result.dblevel - 1, result.isVideo, undefined, result.pid));
 			console.log('pItem after create new:', pItem);
-			const pItemCount = pItem.children.length + 1;
-			const updateParentOption = {
-				id: result.pid,
-				isLeaf: true,
-				count: pItemCount,
-			};
-			await this._dataService.updateSingle(pItem.dblevel, updateParentOption);
+			pItem.count = pItem.children.length + 1;
+			pItem.isLeaf = true;
+			await this._dataService.updateSingle(pItem.dblevel, pItem);
+			// await this._dataService.updateSearch('add', [result]);
+			// if (this._electronService.isElectronApp) {
+			// 	await this.exportWebAPISingle(result, pItem);
+			// 	this._electronService.ipcRenderer.invoke('update-single-api', result.url);
+			// }
 		}, (error) => {
 			console.log('error creating new item', error);
 		});
@@ -264,58 +260,67 @@ export class DatabasePage implements OnInit {
 			// const xorPath = '/home/vgm/Desktop'
 			// this._electronService.ipcRenderer.send('xor-key', xorPath, false);
 			// this._electronService.ipcRenderer.send('create-instance-db', prefixPath, startPoint, endPoint);
-			this._electronService.ipcRenderer.invoke('test-data', '/home/vgm/Desktop/newupload/7 Kỳ Lễ/6_Lễ Thổi Kèn.mp4');
+			// this._electronService.ipcRenderer.invoke('test-data');
+			this._electronService.ipcRenderer.send('update-instance');
 		}
 
-		// const fileInfo = {
-		//   pid: '193f4b25-1d46-4d15-8d87-d181de0a93bf',
-		//   name: '01-Đức Thánh Linh Có Ngự Trong Tôi Không P1',
-		//   size: 2258434926,
-		//   duration: '76:44',
-		//   qm: '',
-		//   url: '01-bai-giang.hoc-theo-chu-de.11-than-le-that---trai-tn2017.01-duc-thanh-linh-co-ngu-trong-toi-khong-p1',
-		//   hash: '',
-		//   isVideo: true,
-		//   dblevel: 5
-		// }
+
 
 
 	}
 
-	async exportAPI() {
+	async exportAPI(apiType) {
 		if (this._electronService.isElectronApp) {
 			this._electronService.ipcRenderer.invoke('upload-db-confirmation').then(async (result) => {
 				if (result === 1) {
 					await this.presentLoading(this._translateService.instant('database.msg.export-waiting'));
-					if (this._configService.encryptedConf.status) {
-						await this.exportWebAPI();
-						await this._electronService.ipcRenderer.invoke('upload-api', 'web');
-					} else {
-						await this.presentToast(this._translateService.instant('database.msg.cloud-error'), 'toast-error');
-					}
-					if (this._configService.ipfsAPIGateway.status) {
-						await this.exportSpeakerAPI();
-						await this._electronService.ipcRenderer.invoke('upload-api', 'speaker');
-						// 	let apiJson = await fetch(apiGateway).then(async (response) => await (await response.clone()).json());
-						// 	console.log('apiJson', apiJson);
-						// 	await this._electronService.ipcRenderer.invoke('export-database', 'speaker', apiJson, 'apiJson');
-						// await this._electronService.ipcRenderer.invoke('add-ipfs', `${outpath}/API-speaker`).then(async (hash) => {
-						// 	apiJson.version += 1;
-						// 	apiJson.api = hash;
-						// 	await this._electronService.ipcRenderer.invoke('export-database', 'speaker', apiJson, outpath, 'apiJson');
-						// 	await this._electronService.ipcRenderer.invoke('add-ipfs', `${outpath}/API-speaker/instruction.json`).then(async (apiHash) => {
-						// 		const updateDNS = await this._electronService.ipcRenderer.invoke('update-dns', apiHash);
-						// 		console.log('Update DNS Status:', apiHash, '\n', updateDNS);
-						// 	})
-						// });
-					} else {
-						await this.presentToast(this._translateService.instant('database.msg.ipfs-error'), 'toast-error');
+					switch (apiType) {
+						case 'web': {
+							if (this._configService.encryptedConf.status) {
+								await this.exportWebAPI();
+								await this._electronService.ipcRenderer.invoke('upload-api', 'web');
+								// await this._electronService.ipcRenderer.invoke('upload-tmp-api', 'web');
+							} else {
+								await this.presentToast(this._translateService.instant('database.msg.cloud-error'), 'toast-error');
+							}
+						}
+							break;
+						case 'speaker': {
+							if (this._configService.ipfsAPIGateway.status && this._configService.dnsGateway.status) {
+								await this.exportSpeakerAPI();
+								const apiCID = await this._electronService.ipcRenderer.invoke('upload-api', 'speaker');
+								if (apiCID) {
+									let apiJson = await fetch(`https://cdn-ipfs-vn.hjm.bid/ipns/${this._configService.dnsGateway.cf_dns}`).then(async (response) => await (await response.clone()).json());
+									apiJson.version += 1;
+									apiJson.api = apiCID;
+									console.log('apiJson', apiJson);
+									await this._electronService.ipcRenderer.invoke('export-database', 'speaker', apiJson, 'apiJson');
+									await this._electronService.ipcRenderer.invoke('update-dns', this._configService.dnsGateway);
+								}
+							} else {
+								await this.presentToast(this._translateService.instant('database.msg.ipfs-error'), 'toast-error');
+							}
+						}
+							break;
+						default:
+							break;
 					}
 					await this.loadingModal.dismiss();
 					await this.presentToast(this._translateService.instant('database.msg.export-api'), 'toast-success');
 				}
 			})
 		}
+	}
+
+	async exportWebAPISingle(item, pItem) {
+		console.log('Exporting Single API:', pItem, item);
+
+		await this._electronService.ipcRenderer.invoke('export-database', item.url, pItem, 'itemList');
+		await this._electronService.ipcRenderer.invoke('export-database', item.url, item, 'itemSingle')
+		await this._electronService.ipcRenderer.invoke('export-database', item.url, pItem, 'topicList');
+		let topic = _.cloneDeep(pItem);
+		delete topic.children;
+		await this._electronService.ipcRenderer.invoke('export-database', item.url, topic, 'topicSingle');
 	}
 
 	async exportWebAPI() {
@@ -363,7 +368,7 @@ export class DatabasePage implements OnInit {
 			(async () => {
 				await queue.add(async () => {
 					const searchList = itemSingle.filter(el => !/^(06-phim)/.test(el.url));
-					await this._electronService.ipcRenderer.invoke('export-database', 'web', searchList, 'searchAPI');
+					await this._dataService.updateSearch('add', searchList);
 				});
 			})();
 			// export API Version
@@ -577,31 +582,31 @@ export class DatabasePage implements OnInit {
 	}
 
 	async updateDB() {
-		console.log('function to update db');
-		this.selectedFileInfo.forEach(item => {
-			this.apollo.mutate<any>({
-				mutation: this._dataService.updateGQL[item.dblevel - 2],
-				variables: {
-					id: item.id,
-					isLeaf: item.isLeaf,
-					count: item.count,
-					md5: item.md5,
-					name: item.name,
-					url: item.url,
-					keyword: item.keyword,
-					hash: item.hash,
-					audience: item.audience,
-					mtime: item.mtime,
-					viewCount: item.viewCount
-				},
-			}).subscribe(async ({ data }) => {
-				const result = data[Object.keys(data)[0]];
-				await this._dataService.updateSearch('add', [result]);
-				console.log('updated local DB', data);
-			}, (error) => {
-				console.log('error updating files', error);
-			});
-		});
+		// console.log('function to update db');
+		// this.selectedFileInfo.forEach(item => {
+		// 	this.apollo.mutate<any>({
+		// 		mutation: this._dataService.updateGQL[item.dblevel - 2],
+		// 		variables: {
+		// 			id: item.id,
+		// 			isLeaf: item.isLeaf,
+		// 			count: item.count,
+		// 			md5: item.md5,
+		// 			name: item.name,
+		// 			url: item.url,
+		// 			keyword: item.keyword,
+		// 			hash: item.hash,
+		// 			audience: item.audience,
+		// 			mtime: item.mtime,
+		// 			viewCount: item.viewCount
+		// 		},
+		// 	}).subscribe(async ({ data }) => {
+		// 		const result = data[Object.keys(data)[0]];
+		// 		await this._dataService.updateSearch('add', [result]);
+		// 		console.log('updated local DB', data);
+		// 	}, (error) => {
+		// 		console.log('error updating files', error);
+		// 	});
+		// });
 	}
 
 	async getFile(fileID) {
@@ -639,8 +644,7 @@ export class DatabasePage implements OnInit {
 							await this._dataService.updateSingle(pItem.dblevel, updateParentOption);
 							await this._dataService.updateSearch('delete', [fileID]);
 							if (this._electronService.isElectronApp) {
-								const fileType = result.isVideo ? 'VGMV' : 'VGMA';
-								await this._electronService.ipcRenderer.invoke('delete-file', `${fileType}/${result.url.replace(/\./g, '\/')}`);
+								await this._electronService.ipcRenderer.invoke('delete-file', result);
 							}
 						}, (error) => {
 							console.log('error deleting files', error);

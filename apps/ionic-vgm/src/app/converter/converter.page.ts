@@ -5,8 +5,10 @@ import * as type from 'libs/xplat/core/src/lib/services/graphql.types';
 import { DataService } from '@vgm-converter/xplat/core';
 import * as path from 'path'
 import * as _ from 'lodash';
-import CryptoJS from "crypto-js";
-import { slice } from 'ramda';
+import * as pinyin from 'chinese-to-pinyin';
+import * as Chinese from 'chinese-s2t';
+// import CryptoJS from "crypto-js";
+// import { slice } from 'ramda';
 
 import Pqueue from 'p-queue';
 const queue = new Pqueue({ concurrency: 1 });
@@ -152,6 +154,7 @@ export class ConverterPage implements OnInit {
 			const pList = [...this.selectedTopics[level - 2].item.children];
 			const [pItem] = pList.filter((item) => item.id.includes(pid));
 			const url = pItem.url.concat('.', pureLatin.toLowerCase().replace(/[\W\_]/g, '-')).replace(/^\.|\.$/g, '').replace(/-+-/g, "-");
+			const topicName = Chinese.s2t(value)
 			// console.log('parent', pid, pItem, pList);
 			this.selectedTopics[level - 1].name = '';
 			await this.apollo.mutate<any>({
@@ -161,7 +164,7 @@ export class ConverterPage implements OnInit {
 					isLeaf: false,
 					url: url,
 					isVideo: this.isVideo,
-					name: value,
+					name: topicName,
 				}
 			}).subscribe(async ({ data }) => {
 				const result = data[Object.keys(data)[0]];
@@ -173,7 +176,7 @@ export class ConverterPage implements OnInit {
 					id: result.pid,
 					count: pItemCount,
 				};
-				if (pItem.dblevel > 1) await this._dataService.updateSingle(pItem.dblevel, updateParentOption);
+				await this._dataService.updateSingle(pItem.dblevel, updateParentOption);
 				// update UI view
 				this.selectedItem = await _.cloneDeep(result);
 				await this.selectedTopics[level - 1].item.children.push(this.selectedItem);
@@ -182,7 +185,7 @@ export class ConverterPage implements OnInit {
 				resolve(result);
 			}, async (error) => {
 				// query if existing
-				console.log('there was an error sending the query', error, 'try querying existing topic', pItem, url);
+				console.log('there was an error sending the query', error, 'try querying existing topic');
 				const [result]: any = await this.getOptions(pItem.dblevel + 1, pItem.isVideo, undefined, undefined, url);
 				if (result) resolve(result);
 			});
@@ -227,33 +230,35 @@ export class ConverterPage implements OnInit {
 	}
 
 
-	async processDirDB(listArray) {
+	async processDirDB(listArray, selectedItem) {
 		return new Promise(async (resolve, reject) => {
+			console.log(listArray, this.newDBArray);
+
+
 
 			// create large db instant code start
 			// this.newDBArray = [];
-			if (this.selectedItem.name === 'Audio' || this.selectedItem.name === 'Video') {
-				this.selectedItem.url = '';
+			if (selectedItem.name === 'Audio' || selectedItem.name === 'Video') {
+				selectedItem.url = '';
 			}
-			if (this.newDBArray.findIndex(item => item.id === this.selectedItem.id) < 0) this.newDBArray.push(this.selectedItem);
+			if (this.newDBArray.findIndex(item => item.id === selectedItem.id) < 0) this.newDBArray.push(selectedItem);
 			console.log(listArray, this.newDBArray);
 			let i = 0;
 			while (i < listArray.length) {
 				if (!listArray[i].pName) {
-					listArray[i].pName = this.selectedItem.name;
-					listArray[i].pid = this.selectedItem.id;
+					listArray[i].pName = selectedItem.name;
+					listArray[i].pid = selectedItem.id;
 				}
-				const pIndex = this.newDBArray.findIndex(item => path.basename(listArray[i].pName) === item.name);
+				const pIndex = this.newDBArray.findIndex(item => item.name === path.basename(listArray[i].pName));
 				if (pIndex >= 0) {
 					console.log('found pItem', this.newDBArray[pIndex], listArray[i].pName);
 					const newItem = await this.createDirDB(listArray[i].name, this.newDBArray[pIndex]);
 					this.newDBArray.push(newItem);
-					if (newItem) {
-						i++;
-					}
+
 				} else {
 					console.log('pItem not found', listArray[i]);
 				}
+				i++;
 			}
 			if (i === listArray.length) {
 				resolve('done')
@@ -288,24 +293,29 @@ export class ConverterPage implements OnInit {
 		// Some system encode vietnamese combining accent as individual utf-8 characters
 		str = str.replace(/\u0300|\u0301|\u0303|\u0309|\u0323/g, ""); // Huyền sắc hỏi ngã nặng 
 		str = str.replace(/\u02C6|\u0306|\u031B/g, ""); // Â, Ê, Ă, Ơ, Ư
+		// non chinese characters
+		str = pinyin(str, { removeTone: true, keepRest: true })
 		return str;
 	}
 
-	async findIndexArray(arr, md5) {
-		return new Promise(function (resolve, reject) {
-			let i = 0;
-			while (i < arr.length) {
-				if (arr[i].children) {
-					const index = arr[i].children.findIndex(item => item.md5 === md5);
-					if (index > -1) {
-						console.log('found exist:', arr[i].children, md5);
-						resolve(arr[i].children[index])
-						break;
-					};
+
+
+	async findIndexArray(arr, md5: string) {
+		return new Promise(async (resolve, reject) => {
+			const getMembers = (mem) => {
+				const member = { ...mem }; // copy
+				delete member.children;
+				if (!mem.children || !mem.children.length) {
+					return member; // return copied
 				}
-				i++
-				if (i === arr.length) { resolve(false) };
+				// return copied, but pass original to flatMapDeep
+				return [
+					member,
+					_.flatMapDeep(mem.children, getMembers)
+				];
 			}
+			const flatArray = _.flatMapDeep(arr, getMembers);
+			resolve(_.some(flatArray, (item) => item.md5 === md5) || false)
 		})
 	}
 
@@ -426,6 +436,7 @@ export class ConverterPage implements OnInit {
 
 
 	async preConvert() {
+		this.newDBArray = [];
 		if (this._electronService.isElectronApp) {
 			console.log('preConvert called');
 
@@ -450,12 +461,13 @@ export class ConverterPage implements OnInit {
 
 	async startConvert(inputPath, fileCheckbox, selectedItem, isVideo, isGPU) {
 		console.log('startConvert Called:', inputPath, selectedItem);
-		this.tasks.push(inputPath);
+		const task: string = typeof inputPath === 'object' ? inputPath.join() : inputPath; // Check error here
+		this.tasks.push(task);
 		this.isConverting = true;
 		// create directory DB first
 		const dirList = fileCheckbox ? [] : await this._electronService.ipcRenderer.invoke('find-dir-db', inputPath);
 		console.log('dirList Called:', dirList);
-		await this.processDirDB(dirList);
+		if (dirList.length > 0) await this.processDirDB(dirList, selectedItem);
 		// find all files
 		const fileList = fileCheckbox ? inputPath : await this._electronService.ipcRenderer.invoke('find-file-db', inputPath, isVideo);
 		console.log('fileList Called:', fileList);
@@ -471,10 +483,12 @@ export class ConverterPage implements OnInit {
 					const pName = path.basename(path.dirname(file));
 					const index = this.newDBArray.findIndex((pItem) => pItem.name === pName);
 					const pItem = dirList.length !== 0 ? index >= 0 ? this.newDBArray[index] : undefined : selectedItem;
+					console.log('inspecting file::', file, pItem);
+
 					if (pItem) {
 						tasks.push(async () => {
 							const md5 = await this._electronService.ipcRenderer.invoke('checksum', file);
-							const fileExist: any = await this.findIndexArray(this.newDBArray, md5);
+							const fileExist: any = false; //await this.findIndexArray(this.newDBArray, md5);
 							console.log('check file exist:', fileExist);
 							if (fileExist && fileExist.name !== itemName) {
 								console.log('file exist, update item name');
@@ -495,7 +509,7 @@ export class ConverterPage implements OnInit {
 					}
 				});
 				await Promise.all(tasks.map(task => queue.add(task))).then(async () => {
-					this.tasks.splice(this.tasks.indexOf(inputPath), 1)
+					this.tasks.splice(this.tasks.indexOf(task), 1)
 					if (queue.size === 0 && queue.pending === 0) {
 						this.execDone();
 						this._electronService.ipcRenderer.invoke('popup-message', 'exec-done');

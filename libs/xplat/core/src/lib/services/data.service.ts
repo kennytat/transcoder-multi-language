@@ -79,8 +79,8 @@ export class DataService {
 			await this.fetchTree();
 			if (this._configService.searchGateway.status) {
 				const search = new MeiliSearch({
-					host: this._configService.searchGateway.gateway, // 'http://search.hjm.bid'
-					apiKey: this._configService.searchGateway.key, // 'KYV2oMHSE5G2p9ZXwUGH3CfWpaXB1CF5'
+					host: this._configService.searchGateway.gateway,
+					headers: { Authorization: `Bearer ${this._configService.searchGateway.key}` }
 				})
 				this.meiliSearch = search.index(this._configService.searchGateway.database);
 			}
@@ -136,7 +136,7 @@ export class DataService {
 					id: id,
 					url: url,
 				},
-				fetchPolicy: 'cache-and-network',
+				fetchPolicy: 'network-only',
 			}).valueChanges.subscribe(({ data }) => {
 				const list = data[Object.keys(data)[0]];
 				// console.log('fetched Level DB:', level, list, data);

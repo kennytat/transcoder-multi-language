@@ -4,8 +4,11 @@ import * as fs from 'fs'
 import * as path from 'path'
 import * as pinyin from 'chinese-to-pinyin';
 import * as md5 from 'md5-file';
-import { ipfsGateway } from './database';
+import { ipfsGateway, warehouseConf } from './database';
 import { tmpDir } from './index';
+import PQueue from 'p-queue';
+import { CID } from 'multiformats/cid'
+export const rcloneQueue = new PQueue({ concurrency: 2 });
 
 
 export const s3ConfWrite = async (config) => {
@@ -34,29 +37,36 @@ export const s3ConnCheck = async (config) => {
 export const ipfsGWCheck = async (gateway) => {
 	return new Promise(resolve => {
 		exec(`curl -X POST "${gateway}/api/v0/id"`, { timeout: 5000 }, (error, stdout, stderr) => {
-			if (error) resolve(false);
-			resolve(true);
+			if (stdout) resolve(true);
+			resolve(false);
 		})
 	})
 }
 
-export const searchGWCheck = async (gateway) => {
+export const searchGWCheck = async (gateway: string, key: string) => {
 	return new Promise(resolve => {
-		resolve(false);
-		// exec(`curl -X POST "${gateway}/api/v0/id"`, { timeout: 5000 }, (error, stdout, stderr) => {
-		// 	if (error) resolve(false);
-		// 	resolve(true);
-		// })
+		exec(`curl -X GET "${gateway}/version" -H 'Authorization: Bearer ${key}'`, { timeout: 5000 }, (error, stdout, stderr) => {
+			if (stdout && JSON.parse(stdout).pkgVersion) resolve(true);
+			resolve(false);
+		})
 	})
 }
 
-export const dnsGWCheck = async (gateway) => {
-	return new Promise(resolve => {
-		resolve(false);
-		// exec(`curl -X POST "${gateway}/api/v0/id"`, { timeout: 5000 }, (error, stdout, stderr) => {
-		// 	if (error) resolve(false);
-		// 	resolve(true);
-		// })
+export const dnsGWCheck = async (config) => {
+	return new Promise(async resolve => {
+		try {
+			const cf = require('cloudflare')(
+				{
+					token: config.cf_token
+				}
+			);
+			const resp = await cf.zones.read(config.cf_zone_id);
+			if (resp.result.status === 'active') { resolve(true) }
+			resolve(false);
+		} catch (error) {
+			console.log(error);
+			resolve(false);
+		}
 	})
 }
 
@@ -103,11 +113,12 @@ export function langToLatin(str) {
 	return str;
 }
 
+
 export const packCar = async (input, output) => {
 	console.log('packing Car:', input, output);
 	return new Promise(async (resolve, reject) => {
-		if (fs.existsSync(output)) await fs.unlinkSync(output);
-		await execSync(`ipfs-car --wrapWithDirectory false --pack '${input}' --output '${output}'`);
+		if (fs.existsSync(output)) fs.unlinkSync(output);
+		execSync(`ipfs-car --wrapWithDirectory false --pack '${input}' --output '${output}'`);
 		console.log('packed car done');
 		resolve(true);
 	})
@@ -115,34 +126,53 @@ export const packCar = async (input, output) => {
 
 
 // uploadIPFS function
-export const uploadIPFS = async (srcPath, type) => {
+export const uploadIPFS = async (srcPath: string, type: string, isDir = true) => {
 	return new Promise(async (resolve) => {
 		try {
 			const gwStatus = await ipfsGWCheck(ipfsGateway);
-			console.log(ipfsGateway);
-
 			if (gwStatus) {
-				const carPath = path.join(tmpDir, `${path.basename(srcPath)}-${type}.car`);
-				await packCar(srcPath, carPath);
-				console.log('uploadingIPFS:', carPath);
-				console.time(path.parse(carPath).name)
+				if (isDir) {
+					const carPath = type === 'decrypted' ? path.join(tmpDir, `${path.basename(srcPath)}-${type}.car`) : path.join(tmpDir, `${path.basename(srcPath)}.car`);
+					await packCar(srcPath, carPath);
+					if (type === 'encrypted') {
+						const upWarehousePath = `${warehouseConf.name}:${warehouseConf.bucket}/`;
+						rcloneCopy(carPath, upWarehousePath, warehouseConf.path, ['--include', path.basename(carPath)])
+					}
+					console.log('uploadingIPFS:', carPath);
+					// add via dag import
+					exec(`curl -X POST -F file=@${carPath} "${ipfsGateway}/add?format=car&stream-channels=false"`, async (err, stdout, stderr) => {
+						if (stdout) {
+							const cid = JSON.parse(stdout)[0].cid;
+							if (type === 'decrypted' && fs.existsSync(carPath)) fs.unlinkSync(carPath);
+							console.log('upload car done:', carPath, cid);
+							const v0Hash = CID.parse(cid).toV0().toString()
+							resolve(v0Hash);
+						}
+						if (err) {
+							console.log('upload car failed @@:', carPath);
+							if (fs.existsSync(carPath)) fs.unlinkSync(carPath);
+							resolve(false);
+						}
+					})
+				} else {
+					exec(`curl -X POST -F file=@${srcPath} "${ipfsGateway}/add"`, async (err, stdout, stderr) => {
+						if (stdout) {
+							const cid = JSON.parse(stdout).cid;
+							if (fs.existsSync(srcPath)) fs.unlinkSync(srcPath);
+							console.log('upload file done:', srcPath, cid);
+							const v0Hash = CID.parse(cid).toV0().toString()
+							resolve(v0Hash);
+						}
+						if (err) {
+							console.log('upload file failed @@:', srcPath);
+							if (fs.existsSync(srcPath)) fs.unlinkSync(srcPath);
+							resolve(false);
+						}
+					})
+				}
+			} else {
 				resolve(false);
-				// add via dag import
-				// exec(`curl -X POST -F file=@'${carPath}' "${ipfsGateway}/api/v0/dag/import"`, async (err, stdout, stderr) => {
-				// 	if (stdout) {
-				// 		const cid = JSON.parse(stdout).Root.Cid["/"];
-				// 		console.timeEnd(path.parse(carPath).name)
-				// 		await fs.unlinkSync(carPath);
-				// 		resolve(cid.toString());
-				// 	}
-				// 	if (err) {
-				// 		console.timeEnd(path.parse(carPath).name)
-				// 		await fs.unlinkSync(carPath);
-				// 		resolve(false);
-				// 	}
-				// })
 			}
-			resolve(false);
 		} catch (error) {
 			console.log(error);
 			resolve(false);
@@ -150,38 +180,49 @@ export const uploadIPFS = async (srcPath, type) => {
 	});
 }
 
-export const rcloneSync = async (source, des, confPath, extraOption = []) => {
+export const rcloneCopy = (source, des, confPath = undefined, extraOption = []) => {
 	const confOption = confPath ? ['--config', confPath] : [];
 	console.log('Rclone copy:', `'${source}/'`, `'${des}/'`, confOption, extraOption);
-	return new Promise((resolve) => {
-		const rclone = spawn('rclone', ['copy', '--progress', `${source}/`, `${des}/`].concat(confOption).concat(extraOption), { detached: true });
-		rclone.stdout.on('data', async (data) => {
-			console.log(`rclone copy stdout: ${data}`);
+	const src = extraOption.findIndex(elem => elem === '--include') < 0 ? source : path.dirname(source);
+	(async () => {
+		rcloneQueue.add(async () => {
+			const rclone = spawn('rclone', ['copy', '--progress', `${src}/`, `${des}/`].concat(confOption).concat(extraOption), { detached: true });
+			rclone.stdout.on('data', async (data) => {
+				console.log(`rclone copy stdout: ${data}`);
+			});
+			rclone.stderr.on('data', async (data) => {
+				console.log(`Stderr: ${data}`);
+			});
+			rclone.on('close', async (code) => {
+				console.log(`Rclone copy file done with code:`, code);
+				if (fs.existsSync(source) && fs.lstatSync(source).isDirectory()) fs.rmdirSync(source, { recursive: true });
+				if (fs.existsSync(source) && !fs.lstatSync(source).isDirectory()) fs.unlinkSync(source);
+				console.log('removed converted folder');
+			})
 		});
-		rclone.stderr.on('data', async (data) => {
-			console.log(`Stderr: ${data}`);
-		});
-		rclone.on('close', async (code) => {
-			console.log(`Rclone copy file done with code:`, code);
-			resolve('done');
-		})
-	});
+	})();
 }
 
 export const rcloneDelete = async (des, confPath, extraOption = []) => {
-	const confOption = confPath ? ['--config', confPath] : [];
-	console.log('Rclone delete:', `'${des}/'`, confOption, extraOption);
-	return new Promise((resolve) => {
-		const rclone = spawn('rclone', ['delete', '--progress', `${des}/`].concat(confOption).concat(extraOption), { detached: true });
-		rclone.stdout.on('data', async (data) => {
-			console.log(`rclone delete stdout: ${data}`);
+	(async () => {
+		rcloneQueue.add(async () => {
+			const confOption = confPath ? ['--config', confPath] : [];
+			console.log('Rclone delete:', `'${des}/'`, confOption, extraOption);
+			const rclone = spawn('rclone', ['delete', '--progress', `${des}/`].concat(confOption).concat(extraOption), { detached: true });
+			rclone.stdout.on('data', async (data) => {
+				console.log(`rclone delete stdout: ${data}`);
+			});
+			rclone.stderr.on('data', async (data) => {
+				console.log(`Stderr: ${data}`);
+			});
+			rclone.on('close', async (code) => {
+				console.log(`Rclone delete file done with code:`, code);
+			})
 		});
-		rclone.stderr.on('data', async (data) => {
-			console.log(`Stderr: ${data}`);
-		});
-		rclone.on('close', async (code) => {
-			console.log(`Rclone delete file done with code:`, code);
-			resolve('done');
-		})
-	});
+	})();
+}
+
+export const updateSingleAPI = async (filePath) => {
+	console.log('checksum called:', filePath);
+	return await md5(filePath);
 }

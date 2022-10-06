@@ -4,18 +4,19 @@ import * as fs from 'fs'
 import * as CryptoJS from "crypto-js";
 import { slice } from 'ramda';
 import * as path from 'path'
-import { showMessageBox, langToLatin, uploadIPFS, rcloneSync, md5Checksum } from './function';
+import { showMessageBox, langToLatin, uploadIPFS, rcloneCopy, md5Checksum } from './function';
 import { FileInfo } from './database';
 import { tmpDir } from './index';
+import { CID } from 'multiformats/cid'
 import PQueue from 'p-queue';
+import delay from 'delay';
 const queue = new PQueue();
-// import { NFTStorage, File, Blob } from 'nft.storage'
 
 export const tmpService = () => {
 
-	ipcMain.handle('test-data', async (event, str) => {
-
-		const result = await md5Checksum(str);
+	ipcMain.handle('test-data', async (event) => {
+		const secretKey = slice(0, 32, '01-chung-chi-nen-tang.1-nen-tanggggggggggggggggggggggggggggggggg');
+		const result = CryptoJS.AES.encrypt('bafybeie65uuexn4xu2v5a5ibyvyyw6elvyp2levkjixv264itxn5uvw7mq', secretKey).toString();
 		console.log(result);
 		return result;
 
@@ -57,7 +58,7 @@ export const tmpService = () => {
 				const des = `VGM-Converted:vgmencrypted/encrypted/API`;
 				const extraOption = ['--no-update-modtime', '--transfers', '10', '--s3-chunk-size', '64M'];
 				console.log('uploading API:', src, des, undefined, extraOption);
-				await rcloneSync(src, des, undefined, extraOption);
+				await rcloneCopy(src, des, undefined, extraOption);
 				return 'done';
 			}
 			if (apiType === 'speaker') {
@@ -233,44 +234,54 @@ export const tmpService = () => {
 
 
 
-	// ipcMain.on('renamedFolder', async (event, prefix, fileType, startPoint, endPoint) => { // start instant code
-	// 	// // copy ini file to local then rename folder
-	// 	const txtPath = `${prefix}/database/VGMVDir.txt`;
-	// 	const copyFile = (file) => {
-	// 		return new Promise((resolve, reject) => {
-	// 			const sourceDir = path.parse(file).dir;
-	// 			const desDir = sourceDir.replace('origin', 'renamed');
-	// 			if (!fs.existsSync(desDir)) {
-	// 				fs.mkdirSync(desDir, { recursive: true });
-	// 			}
-	// 			const copy = execSync(`cp '${file}' '${desDir}'`);
-	// 			if (copy) {
-	// 				resolve('done');
-	// 			}
-	// 		});
-	// 	}
+	ipcMain.on('update-instance', async (event) => { // start instant code
+		console.log('update instance called:');
+		// // copy ini file to local then rename folder
+		const txtPath = '/home/vgm/Desktop/video-ipfs-count.txt';
+		const apiPath = `/home/vgm/Desktop/API-web/items/single`
 
-	// 	try {
-	// 		const raw = fs.readFileSync(txtPath, { encoding: 'utf8' });
-	// 		if (raw) {
-	// 			let list = raw.split('\n');
-	// 			list.pop();
-	// 			// list.reverse();
-	// 			console.log('total files', list.length);
-	// 			let i = startPoint;
+		const encryptHash = (hash, url) => {
+			const secretKey = slice(0, 32, url + 'gggggggggggggggggggggggggggggggg');
+			// const v0Hash = execSync(`ipfs cid format -f "%M" -b base58btc ${hash}`, { encoding: 'utf8' });
+			const v0Hash = CID.parse(hash).toV0().toString()
+			const encryptedHash = CryptoJS.AES.encrypt(v0Hash, secretKey).toString();
+			console.log(v0Hash, encryptedHash);
+			return encryptedHash
+		}
 
-	// 			// convert video loops
-	// 			while (i < 1) { // list.length or endPoint
-	// 				await copyFile(list[i]);
-	// 				console.log('processed files', i);
-	// 				i++;
-	// 			}
-	// 		}
-	// 	} catch (error) {
-	// 		console.log(error);
+		const processFile = (file) => {
+			return new Promise(async (resolve, reject) => {
+				const info = file.split('|')
+				const raw = fs.readFileSync(`${apiPath}/${info[1]}.json`, { encoding: 'utf8' });
+				let fileInfo = JSON.parse(raw);
+				fileInfo.hash = encryptHash(info[2], info[1]);
+				fileInfo.khash = encryptHash(info[3], info[1]);
+				console.log(fileInfo);
+				await delay(200);
+				event.sender.send('update-item', fileInfo);
+				resolve('done');
+			});
+		}
 
-	// 	}
-	// })
+		try {
+			const raw = fs.readFileSync(txtPath, { encoding: 'utf8' });
+			if (raw) {
+				let list = raw.split('\n');
+				list.pop();
+				console.log('total files:', list.length);
+				let i = 1715;
+				// convert video loops
+				while (i < list.length) { // list.length or endPoint
+					await processFile(list[i]);
+					console.log('processed file:', i);
+					i++;
+				}
+			}
+		} catch (error) {
+			console.log(error);
+
+		}
+	})
 
 
 

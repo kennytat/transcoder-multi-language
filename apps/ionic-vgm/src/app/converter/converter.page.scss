@@ -10,7 +10,9 @@ hr.new {
   align-self: center;
   color: rgb(95, 95, 95);
 }
-
+.card {
+	overflow-y: scroll;
+}
 .no-vertical-padding {
   color: var(--ion-color-dark);
   padding-top: 0px;

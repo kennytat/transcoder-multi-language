@@ -11,6 +11,10 @@
   --size: 13px;
 }
 
+.card {
+	overflow-y: scroll;
+}
+
 .info-btn {
   position: absolute;
   width: calc(50% - 30px);
@@ -32,6 +36,7 @@
     padding: 0 2px 0 2px;
   }
 }
+
 ion-card-content {
   height: auto;
 }

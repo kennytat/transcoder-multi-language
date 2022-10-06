@@ -5,14 +5,15 @@ import * as path from 'path'
 import * as os from 'os'
 import {
 	showMessageBox,
-	rcloneSync,
+	rcloneCopy,
 	rcloneDelete,
 	s3ConfWrite,
 	s3ConnCheck,
 	ipfsGWCheck,
 	dnsGWCheck,
 	searchGWCheck,
-	md5Checksum
+	md5Checksum,
+	uploadIPFS
 } from './function';
 import { win, tmpDir } from './index';
 
@@ -69,10 +70,10 @@ export const databaseService = () => {
 					result = await ipfsGWCheck(config.gateway);
 					break;
 				case "search":
-					result = await searchGWCheck(config.gateway);
+					result = await searchGWCheck(config.gateway, config.key);
 					break;
 				case "dns":
-					result = await dnsGWCheck(config.gateway);
+					result = await dnsGWCheck(config);
 					break;
 				default:
 					break;
@@ -85,27 +86,30 @@ export const databaseService = () => {
 
 	// add mass DB folder recursively
 	ipcMain.handle('find-dir-db', async (event, dirPath: string) => { // instant add to db
-		console.log('find dir called:', dirPath);
-
 		let apiArray = [];
 		try {
 			const list = await execSync(`find '${dirPath}' -type d -printf '%h\\0%d\\0%p\\n' | sort -t '\\0' -n | awk -F '\\0' '{print $3}'`, { encoding: 'utf8' });
 			const listArray = await list.toString().split('\n');
-			listArray.pop();
-			listArray.shift();
 			console.log('listArray:', listArray, listArray.length);
 			if (listArray) {
 				for await (const folderPath of listArray) {
-					const folderName = path.basename(folderPath);
-					const re = new RegExp(`${dirPath}[\/]?`, "g");
-					const pAPI = path.dirname(folderPath).replace(re, '');
-					apiArray.push({
-						pName: pAPI,
-						name: folderName,
-					})
+					if (folderPath && folderPath != '\n' && folderPath != dirPath) {
+						const folderName = path.basename(folderPath);
+						const re = new RegExp(`${dirPath}[\/]?`, "g");
+						const pAPI = path.dirname(folderPath).replace(re, '');
+						apiArray.push({
+							pName: pAPI,
+							name: folderName,
+							pathLevel: ((folderPath || '').match(/\//) || []).length
+						})
+					}
 				}
 				console.log(apiArray);
-				return apiArray;
+				return apiArray.sort((a, b) => {
+					if (a.pathLevel < b.pathLevel) return -1;
+					if (a.pathLevel > b.pathLevel) return 1;
+					return 0;
+				});
 			}
 		} catch (error) {
 			console.log('fs promise error:', error);
@@ -165,16 +169,17 @@ export const databaseService = () => {
 
 	ipcMain.handle('upload-api', async (event, apiType) => {
 		try {
+			const src = path.join(tmpDir, `API-${apiType}`);
 			if (apiType === 'web') {
-				const src = path.join(tmpDir, `API-${apiType}`);
 				const des = `${encryptedConf.name}:${encryptedConf.bucket}/API`;
 				const extraOption = ['--no-update-modtime', '--transfers', '10', '--s3-chunk-size', '64M'];
 				console.log('uploading API:', src, des, encryptedConf.path);
-				await rcloneSync(src, des, encryptedConf.path, extraOption);
+				rcloneCopy(src, des, encryptedConf.path, extraOption);
 				return 'done';
 			}
 			if (apiType === 'speaker') {
-				return 'done';
+				const apiCID: any = await uploadIPFS(src, 'speakerAPI');
+				return apiCID;
 			}
 		} catch (error) {
 			console.log(error);
@@ -190,7 +195,7 @@ export const databaseService = () => {
 				buttons: ['Cancel', 'Upload'],
 				defaultId: 0,
 				title: 'Upload Confirmation',
-				message: 'Upload API to S3',
+				message: 'Uploading API',
 				detail: 'Upload process takes approxmately 15 mins',
 			}
 			return await dialog.showMessageBox(win, options).then(result => {
@@ -233,11 +238,14 @@ export const databaseService = () => {
 		}
 	})
 
-	ipcMain.handle('delete-file', async (event, url) => {
+	ipcMain.handle('delete-file', async (event, file) => {
 		try {
-			const des = `${encryptedConf.name}:${encryptedConf.bucket}/${url}`;
-			console.log('deleteing data:', des, encryptedConf.path);
-			await rcloneDelete(des, encryptedConf.path);
+			const fileType = file.isVideo ? 'VGMV' : 'VGMA';
+			const convertedPath = `${encryptedConf.name}:${encryptedConf.bucket}/${fileType}/${file.url.replace(/\./g, '\/')}`;
+			await rcloneDelete(convertedPath, encryptedConf.path);
+			const warehousePath = `${warehouseConf.name}:${warehouseConf.bucket}/${file.url}.car`
+			await rcloneDelete(warehousePath, warehouseConf.path);
+			console.log('deleting data:', convertedPath, warehousePath);
 			return 'done';
 		} catch (error) {
 			console.log(error);
@@ -256,19 +264,45 @@ export const databaseService = () => {
 		showMessageBox(options);
 	})
 
-	ipcMain.handle('update-dns', (event, api) => {
-		const ls = exec(`curl -X PUT "https://api.cloudflare.com/client/v4/zones/${process.env.CF_ZONEID}/dns_records/${process.env.CF_DNSID}" \
-     -H "X-Auth-Email: ${process.env.CF_EMAIL}" \
-     -H "X-Auth-Key: ${process.env.CF_API}" \
-     -H "Content-Type: application/json" \
-     --data '{"type":"TXT","name":"_dnslink.find.hjm.bid","content":"dnslink=/ipfs/${api}","ttl":1,"proxied":false}' `, (error, stdout, stderr) => {
-			if (error) {
-				console.error(`Update CF Error: ${error}`);
-				return error;
+	ipcMain.handle('update-dns', (event, config) => {
+		return new Promise(async resolve => {
+			try {
+				const cf = require('cloudflare')({ token: config.cf_token });
+				const dnsID = await cf.dnsRecords.browse(config.cf_zone_id).then(dnses => {
+					const i = dnses.result.findIndex(dns => dns.name === config.cf_dns)
+					if (i >= 0) return dnses.result[i].id
+					return undefined;
+				});
+				const apiPath = path.join(tmpDir, `API-speaker`, `instruction.json`);
+				const dnsValue = await uploadIPFS(apiPath, 'speakerAPI', false);
+				const subDomain = config.cf_dns.split('.').slice(0, -2).join('.');
+				const dnsRecord = { type: "TXT", name: subDomain, content: `dnslink=/ipfs/${dnsValue}` }
+				console.log('updating dns record:', config.cf_zone_id, dnsID, dnsRecord);
+				if (config.cf_zone_id && dnsID && dnsValue) {
+					const newRecord = await cf.dnsRecords.edit(config.cf_zone_id, dnsID, dnsRecord);
+					console.log('modified DNS Record::', newRecord);
+					if (newRecord.success) resolve(true)
+				}
+				resolve(false);
+			} catch (error) {
+				console.log(error);
+				resolve(false);
 			}
-			console.log(`Updated CF Record: ${stdout}`);
-			return `update dns done: ${stdout}`;
-		});
+		})
 
 	});
+
+	ipcMain.handle('update-single-api', async (event, url) => {
+		try {
+			const src = path.join(tmpDir, `API-${url}`);
+			const des = `${encryptedConf.name}:${encryptedConf.bucket}/API`;
+			const extraOption = ['--no-update-modtime', '--transfers', '10', '--s3-chunk-size', '64M'];
+			console.log('uploading API:', src, des, encryptedConf.path);
+			rcloneCopy(src, des, encryptedConf.path, extraOption);
+			return 'done';
+		} catch (error) {
+			console.log(error);
+			return null
+		}
+	})
 }

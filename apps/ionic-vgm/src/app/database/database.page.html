@@ -25,11 +25,19 @@
               slot="end"
               style="margin: 0; font-size: 17px"
               color="warning"
-              (click)="exportAPI()"
+              (click)="exportAPI('web')"
             >
               <ion-icon name="cloud-upload-outline"> </ion-icon>
             </ion-button>
-
+            <ion-button
+              fill="clear"
+              slot="end"
+              style="margin: 0; font-size: 17px"
+              color="warning"
+              (click)="exportAPI('speaker')"
+            >
+              <ion-icon name="megaphone-outline"></ion-icon>
+            </ion-button>
             <ion-button
               fill="clear"
               slot="end"

@@ -49,20 +49,22 @@ const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
 	// to hide title bar, uncomment:
 	// titleBarStyle: 'hidden',
 	webPreferences: {
+		// to hide devTools, change to false: else debugMode
 		devTools: debugMode,
 		nodeIntegration: debugMode,
 	},
 
 };
-export const tmpDir = path.join(os.tmpdir(), app.getName(), 'vtm');
+export const lang = 'vgm-hoa';
+export const tmpDir = path.join(os.tmpdir(), app.getName(), lang);
 
 
 // create graphql server function
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule)
-	await app.listen(3033, () => {
+	await app.listen(3030, () => {
 		console.log(`
-  🚀 Server ready at: http://localhost:3033/graphql
+  🚀 Server ready at: http://localhost:3030/graphql
   ⭐️ See sample queries: http://pris.ly/e/ts/graphql-nestjs#using-the-graphql-api
   `)
 	})
@@ -177,9 +179,7 @@ try {
 			databaseService();
 			convertService();
 			tmpService();
-			if (!fs.existsSync(tmpDir)) {
-				fs.mkdirSync(tmpDir);
-			}
+			fs.mkdirSync(tmpDir, { recursive: true });
 		} catch (error) {
 			console.log(error);
 		}

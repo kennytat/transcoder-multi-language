@@ -3,7 +3,7 @@ import { exec, spawn, execSync, spawnSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as os from 'os'
-import { showMessageBox, langToLatin, uploadIPFS, rcloneSync } from './function';
+import { showMessageBox, langToLatin, uploadIPFS, rcloneCopy } from './function';
 import { FileInfo, encryptedConf } from './database';
 import { tmpDir } from './index';
 // import { create, globSource, CID } from 'ipfs-http-client'
@@ -11,8 +11,7 @@ import * as CryptoJS from "crypto-js";
 import { slice } from 'ramda';
 import * as M3U8FileParser from "m3u8-file-parser";
 import * as bitwise from 'bitwise';
-import PQueue from 'p-queue';
-const queue = new PQueue();
+import * as Chinese from 'chinese-s2t';
 
 export const convertService = () => {
 
@@ -32,7 +31,7 @@ export const convertService = () => {
 						const mp4Tmp = tmpPath.replace(tmpName, `${tmpName}1`);
 						await execSync(`mv "${tmpPath}" "${mp4Tmp}"`);
 						console.log(mp4Tmp, tmpPath);
-						const mp4 = spawn('ffmpeg', ['-vsync', '0', '-i', `${mp4Tmp}`, '-c:v', 'h264_nvenc', '-filter:v', `pad="width=max(iw\\,ih*(16/9)):height=ow/(16/9):x=(ow-iw)/2:y=(oh-ih)/2"`, '-c:a', 'copy', `${tmpPath}`]);
+						const mp4 = spawn('ffmpeg', ['-y', '-vsync', '0', '-i', `${mp4Tmp}`, '-c:v', 'h264_nvenc', '-filter:v', 'pad=width=max(iw\\,ih*(16/9)):height=ow/(16/9):x=(ow-iw)/2:y=(oh-ih)/2', '-c:a', 'copy', `${tmpPath}`]);
 						mp4.stdout.on('data', async (data) => {
 							console.log(`converting to mp4 stdout: ${data}`);
 						});
@@ -41,7 +40,9 @@ export const convertService = () => {
 						});
 						mp4.on('close', async (code) => {
 							console.log(`Converted to mp4 done with code:`, code);
-							await fs.unlinkSync(mp4Tmp);
+							if (code === 0) {
+								await fs.unlinkSync(mp4Tmp);
+							}
 							resolve(true);
 						})
 					} else {
@@ -90,13 +91,13 @@ export const convertService = () => {
 				const minutes: number = Math.floor(duration / 60);
 				fileInfo.duration = `${minutes}:${Math.floor(duration) - (minutes * 60)}`;
 				fileInfo.size = parseInt(metaData.filter(name => name.includes("size=")).toString().replace('size=', ''));
-				fileInfo.name = path.parse(file).name;
+				fileInfo.name = Chinese.s2t(path.parse(file).name);
 				fileInfo.md5 = md5;
 				// process filename
 				const pureLatin = langToLatin(fileInfo.name);
 				fileInfo.url = `${pItem.url}.${pureLatin.toLowerCase().replace(/[\W\_]/g, '-').replace(/-+-/g, "-")}`;
 
-				const outPath = `${tmpDir}/${pureLatin.replace(/\s/g, '')}`;
+				const outPath = `${tmpDir}/${fileInfo.url}`;
 				fileInfo.isVideo = pItem.isVideo;
 				fileInfo.pid = pItem.id;
 				fileInfo.dblevel = pItem.dblevel + 1;
@@ -166,12 +167,15 @@ export const convertService = () => {
 						const VGM = fType === 'audio' ? 'VGMA' : fType === 'video' ? 'VGMV' : '';
 						console.log('start uploading');
 
-						const upConvertedPath = `${encryptedConf.name}:${encryptedConf.bucket}/${VGM}/${fileInfo.url.replace(/\./g, '\/')}`;
-						await rcloneSync(`${outPath}`, upConvertedPath, encryptedConf.path);
+						// const upConvertedPath = `${encryptedConf.name}:${encryptedConf.bucket}/${VGM}/${fileInfo.url.replace(/\./g, '\/')}`;
+						// rcloneCopy(`${outPath}`, upConvertedPath, encryptedConf.path);
+
+						// copy to local folder
+						const localTmp = `/mnt/backup/vgmhoa-converted/${VGM}/${fileInfo.url.replace(/\./g, '\/')}`
+						rcloneCopy(`${outPath}`, localTmp);
+
 						// upload done -> delete converted folder
 						console.log('updated fileInfo', fileInfo);
-						await fs.rmdirSync(outPath, { recursive: true });
-						console.log('removed converted folder');
 						// create database
 						event.sender.send('create-database', fileInfo);
 						resolve(fileInfo);
@@ -182,21 +186,8 @@ export const convertService = () => {
 			});
 		}
 
-		// let files: string;
-		// let totalFiles: number = 0;
-		// let convertedFiles: number = 0;
 		let progression_status: number = 0;
-		// let fileType: string;
-		// Get total input file count 
-		// if (fileOnly) {
-		// 	files = inputFile;
-		// } else {
-		// 	files = execSync(`find '${inputFile}' -regextype posix-extended -regex '.*.(mp4|mp3)'`, { encoding: "utf8" }).split('\n');
-		// 	files.pop();
-		// }
-		// totalFiles = files.length;
 		const fileType = pItem.isVideo ? 'video' : 'audio';
-
 		return new Promise(async (resolve, reject) => {
 			const fileOk = await checkMP4(inputFile, fileType); // audio dont need check MP4
 			if (fileOk) {

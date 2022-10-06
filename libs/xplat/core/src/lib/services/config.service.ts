@@ -56,12 +56,9 @@ export class ConfigService {
 		id: 'dns',
 		status: false,
 		name: '',
-		domain: '',
-		cf_gateway: '',
+		cf_dns: '',
 		cf_zone_id: '',
-		cf_dns_id: '',
-		cf_email: '',
-		cf_api: '',
+		cf_token: '',
 	};
 	dnsGateway$: BehaviorSubject<{}> = new BehaviorSubject<{}>(this.dnsGateway);
 
